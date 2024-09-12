@@ -1,35 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- Parent inherits from Spring Boot's parent POM -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+
     <groupId>com.jack</groupId>
     <artifactId>microservice-assignment</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>microservice-assignment</name>
-    <description>microservice-assignment</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
+    <description>Microservice Assignment Parent Project</description>
+
+    <!-- This project is a POM, not a JAR or WAR -->
+    <packaging>pom</packaging>
+
+    <!-- Define all sub-modules (microservices) -->
+    <modules>
+        <module>microservice-authenticationservice</module>
+        <module>microservice-priceservice</module>
+        <module>microservice-userservice</module>
+        <module>microservice-walletservice</module>
+    </modules>
+
+    <!-- Define common properties -->
     <properties>
         <java.version>21</java.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
     </properties>
+
+    <!-- Dependency management for all modules -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Import Spring Boot's dependency management -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>3.3.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Import Spring Cloud dependencies -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- Common dependencies for all modules -->
     <dependencies>
         <!-- Spring Boot Web -->
         <dependency>
@@ -54,12 +84,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
-        </dependency>
-
-        <!-- RabbitMQ -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
         <!-- Lombok for reducing boilerplate code -->
@@ -96,20 +120,11 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
+    <!-- Build configuration for all modules -->
     <build>
         <plugins>
+            <!-- Spring Boot Maven Plugin for building Spring Boot applications -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
