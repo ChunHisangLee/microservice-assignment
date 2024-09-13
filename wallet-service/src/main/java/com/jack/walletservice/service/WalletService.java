@@ -5,9 +5,6 @@ import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.message.WalletCreationMessage;
 
 public interface WalletService {
-    Wallet createWallet(Long userId);  // Use userId to create a wallet
-
-    void creditWallet(Long userId, Double amount);
 
     void createWallet(WalletCreationMessage message);
 

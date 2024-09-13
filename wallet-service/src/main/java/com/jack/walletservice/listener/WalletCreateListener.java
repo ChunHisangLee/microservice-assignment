@@ -23,14 +23,9 @@ public class WalletCreateListener {
         logger.info("Received Wallet Creation message for user ID: {}", message.getUserId());
 
         try {
-            if (walletService.walletExists(message.getUserId())) {
-                logger.info("Wallet already exists for user ID: {}. Skipping creation.", message.getUserId());
-                return;
-            }
-
-            walletService.createWallet(message.getUserId());
-            walletService.creditWallet(message.getUserId(), message.getInitialBalance());
-            logger.info("Wallet created and credited with initial balance for user ID: {}", message.getUserId());
+            // Delegate the wallet creation to WalletService's createWallet method
+            walletService.createWallet(message);
+            logger.info("Wallet created successfully for user ID: {}", message.getUserId());
         } catch (Exception e) {
             logger.error("Failed to process wallet creation message for user ID: {}. Error: {}", message.getUserId(), e.getMessage(), e);
         }

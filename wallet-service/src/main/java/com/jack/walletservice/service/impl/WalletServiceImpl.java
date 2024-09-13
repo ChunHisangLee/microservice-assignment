@@ -34,18 +34,26 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public Wallet createWallet(Long userId) {
+    public void createWallet(WalletCreationMessage message) {
+        // Check if wallet already exists for the user
+        if (walletExists(message.getUserId())) {
+            logger.warn("Wallet for user ID {} already exists. Skipping wallet creation.", message.getUserId());
+            return;
+        }
+
+        // Create a wallet for the user
         Wallet wallet = new Wallet();
-        wallet.setUserId(userId);
-        wallet.setUsdBalance(0.0); // Default USD balance
-        wallet.setBtcBalance(0.0); // Default BTC balance
+        wallet.setUserId(message.getUserId());
+        wallet.setUsdBalance(message.getInitialBalance());
+        wallet.setBtcBalance(0.0);
+
         wallet = walletRepository.save(wallet);
 
         updateCacheAndNotify(wallet);
 
-        logger.info("Wallet created and balance published for user ID: {}", userId);
-        return wallet;
+        logger.info("Wallet created successfully for user ID: {}", message.getUserId());
     }
+
 
     @Transactional(readOnly = true)
     @Override
@@ -67,28 +75,6 @@ public class WalletServiceImpl implements WalletService {
         updateCacheAndNotify(wallet);
 
         logger.info("Wallet updated and balance published for user ID: {}", userId);
-    }
-
-    @Transactional
-    @Override
-    public void creditWallet(Long userId, Double amount) {
-        Wallet wallet = getWalletByUserId(userId);
-        logger.info("Crediting {} USD to wallet of user ID: {}", amount, userId);
-        wallet.setUsdBalance(wallet.getUsdBalance() + amount);
-        walletRepository.save(wallet);
-
-        updateCacheAndNotify(wallet);
-
-        logger.info("Wallet credited and balance published for user ID: {}", userId);
-    }
-
-    @Override
-    public void createWallet(WalletCreationMessage message) {
-        // Create a wallet for the user
-        Wallet wallet = new Wallet();
-        wallet.setUserId(message.getUserId());
-        wallet.setUsdBalance(message.getInitialBalance());
-        walletRepository.save(wallet);
     }
 
     @Transactional
@@ -116,6 +102,7 @@ public class WalletServiceImpl implements WalletService {
 
         // Check Redis cache first
         WalletBalanceDTO cachedBalance = redisTemplate.opsForValue().get(cacheKey);
+
         if (cachedBalance != null) {
             logger.info("Cache hit for user ID: {}", userId);
             return cachedBalance;
