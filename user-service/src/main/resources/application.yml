@@ -1,0 +1,6 @@
+server:
+  port: 8081  # Port for User Service in Docker
+
+spring:
+  profiles:
+    active: local  # Default profile

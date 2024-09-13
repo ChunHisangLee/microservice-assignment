@@ -1,0 +1,38 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pricedb
+    username: postgres
+    password: Ab123456
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      auto-commit: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    open-in-view: false  # Disable open-in-view to avoid potential performance issues
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: Ab123456
+
+logging:
+  level:
+    com.jack.priceservice: INFO
+  pattern:
+    console: "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+initial:
+  price: 100.00
