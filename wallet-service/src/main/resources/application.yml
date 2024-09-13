@@ -1,0 +1,6 @@
+server:
+  port: 8082  # Port for wallet Service in Docker
+
+spring:
+  profiles:
+    active: local  # Default profile is local
