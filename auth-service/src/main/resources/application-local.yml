@@ -1,0 +1,34 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: Ab123456
+
+# Logging level for the Auth Service
+logging:
+  level:
+    com.jack.authservice: INFO
+
+  pattern:
+    console: "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}"
+
+# SpringDoc settings for API documentation
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# JWT settings specific to the Auth Service
+app:
+  jwtSecret: Xb34fJd9kPbvmJc84mDkV9b3Xb4fJd9kPbvmJc84mDkV9b3Xb34fJd9kPbvmJc84
+  jwtExpirationMs: 3600000  # 1 hour
+
+# Security settings (auth-service should have authentication enabled)
+security:
+  authentication:
+    enabled: false
+
+# Local environment user service URL for Feign
+USER_SERVICE_URL: http://127.0.0.1:8081

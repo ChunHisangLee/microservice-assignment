@@ -1,0 +1,6 @@
+server:
+  port: 8084  # Port for Auth Service
+
+spring:
+  profiles:
+    active: local  # Default to local profile
