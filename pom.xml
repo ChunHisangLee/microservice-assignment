@@ -24,10 +24,10 @@
 
     <!-- Define all sub-modules (microservices) -->
     <modules>
-        <module>microservice-authenticationservice</module>
-        <module>microservice-priceservice</module>
-        <module>microservice-userservice</module>
-        <module>microservice-walletservice</module>
+        <module>auth-service</module>
+        <module>price-service</module>
+        <module>user-service</module>
+        <module>wallet-service</module>
     </modules>
 
     <!-- Define common properties -->
@@ -77,13 +77,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-
-        <!-- PostgreSQL Driver -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok for reducing boilerplate code -->

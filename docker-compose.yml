@@ -1,0 +1,201 @@
+services:
+  # PostgreSQL for Price Service
+  pricedb:
+    image: postgres:14.5
+    environment:
+      POSTGRES_DB: pricedb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ab123456
+    ports:
+      - "5435:5432"  # Host Port: Container Port
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pricedb-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # PostgreSQL for User Service
+  userdb:
+    image: postgres:14.5
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ab123456
+    ports:
+      - "5436:5432"  # Host Port: Container Port
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - userdb-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # PostgreSQL for Wallet Service
+  walletdb:
+    image: postgres:14.5
+    environment:
+      POSTGRES_DB: walletdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ab123456
+    ports:
+      - "5434:5432"  # Host Port: Container Port
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - walletdb-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Common Redis Service
+  redis:
+    image: redis:7.0
+    command: ["redis-server", "--requirepass", "Ab123456"]
+    ports:
+      - "6379:6379"
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "Ab123456", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # Common RabbitMQ Service
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"      # Main RabbitMQ port
+      - "15672:15672"    # RabbitMQ management interface
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  # Price Service
+  price-service:
+    build:
+      context: ./price-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://pricedb:5432/pricedb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Ab123456
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: Ab123456
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      pricedb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      USER_SERVICE_URL: http://user-service:8081
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: Ab123456
+      APP_JWTSECRET: Xb34fJd9kPbvmJc84mDkV9b3Xb34fJd9kPbvmJc84
+      APP_JWTEXPIRATIONMS: 3600000  # 1 hour
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      AUTH_SERVICE_URL: http://auth-service:8084
+      SPRING_DATASOURCE_URL: jdbc:postgresql://userdb:5432/userdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Ab123456
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      userdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+  # Wallet Service
+  wallet-service:
+    build:
+      context: ./wallet-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://walletdb:5432/walletdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Ab123456
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      walletdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+networks:
+  microservice-network:
+    driver: bridge
+
+volumes:
+  pricedb-data:
+  userdb-data:
+  walletdb-data:
+  redis-data:
+  rabbitmq-data:
