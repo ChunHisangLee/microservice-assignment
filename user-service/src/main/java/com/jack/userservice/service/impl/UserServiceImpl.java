@@ -1,18 +1,19 @@
 package com.jack.userservice.service.impl;
 
 import com.jack.userservice.client.AuthServiceClient;
+import com.jack.userservice.client.WalletBalanceRequestSender;
 import com.jack.userservice.dto.*;
 import com.jack.userservice.entity.Users;
 import com.jack.userservice.exception.CustomErrorException;
 import com.jack.userservice.mapper.UsersMapper;
 import com.jack.userservice.message.WalletCreationMessage;
+import com.jack.userservice.outbox.OutboxDTO;
+import com.jack.userservice.outbox.OutboxService;
 import com.jack.userservice.repository.UsersRepository;
 import com.jack.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.AmqpConnectException;
-import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,16 +32,14 @@ public class UserServiceImpl implements UserService {
 
     private final UsersRepository usersRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RabbitTemplate rabbitTemplate;
+    private final OutboxService outboxService;
     private final AuthServiceClient authServiceClient;
     private final UsersMapper usersMapper;
     private final RedisTemplate<String, WalletBalanceDTO> redisTemplate;
+    private final WalletBalanceRequestSender walletBalanceRequestSender;
 
     @Value("${app.wallet.cache-prefix}")
     private String cachePrefix;
-
-    @Value("${app.wallet.exchange}")
-    private String exchange;
 
     @Value("${app.wallet.routing-key.create}")
     private String routingKey;
@@ -63,16 +62,22 @@ public class UserServiceImpl implements UserService {
                 .password(encodedPassword)
                 .build();
 
-        logger.info("AUTH_SERVICE_URL: {}", System.getenv("AUTH_SERVICE_URL"));
         Users savedUser = usersRepository.save(newUser);
 
         // Programmatically log the user in by calling auth-service
         AuthRequestDTO authRequest = new AuthRequestDTO(savedUser.getEmail(), registrationDTO.getPassword());
         AuthResponseDTO authResponse = authServiceClient.login(authRequest);  // Use Feign Client to call auth-service
 
-        // Send a wallet creation message
+        // Save a wallet creation message in the Outbox instead of directly sending it
         Double initialBalance = 1000.00;
-        sendWalletCreationMessage(savedUser.getId(), initialBalance);  // Initial balance of 1000 USD
+        OutboxDTO outboxDTO = new OutboxDTO();
+        outboxDTO.setAggregateId(savedUser.getId());  // User ID
+        outboxDTO.setAggregateType("User");  // The type of entity related to the outbox
+        outboxDTO.setPayload("{ \"userId\": " + savedUser.getId() + ", \"initialBalance\": " + initialBalance + " }");
+
+        // Save outbox entry
+        outboxService.saveOutbox(outboxDTO);  // Asynchronous wallet creation
+
         // Return user details and JWT token
         return UserResponseDTO.builder()
                 .id(savedUser.getId())
@@ -171,8 +176,13 @@ public class UserServiceImpl implements UserService {
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
         } else {
             logger.warn("Balance not found in Redis for user ID: {}", userId);
-            usersDTO.setUsdBalance(null);
-            usersDTO.setBtcBalance(null);
+
+            // Option 1: Send balance request to wallet-service via RabbitMQ
+            walletBalanceRequestSender.sendBalanceRequest(userId);
+
+            // Option 2: Set default balance values (avoid nulls)
+            usersDTO.setUsdBalance(0.0);  // Use 0.0 as the default value
+            usersDTO.setBtcBalance(0.0);  // Use 0.0 as the default value
         }
 
         return usersDTO;
@@ -198,23 +208,5 @@ public class UserServiceImpl implements UserService {
                     POST_LOGIN_API_PATH
             );
         });
-    }
-
-    private void sendWalletCreationMessage(Long userId, Double initialBalance) {
-        WalletCreationMessage walletMessage = new WalletCreationMessage(userId, initialBalance);
-
-        try {
-            rabbitTemplate.convertAndSend(exchange, routingKey, walletMessage);
-            logger.info("Wallet creation message sent for user ID: {}", userId);
-        } catch (AmqpConnectException e) {
-            logger.error("Connection to RabbitMQ failed: {}", e.getMessage());
-        } catch (AmqpException e) {
-            logger.error("Failed to send message to RabbitMQ: {}", e.getMessage());
-            throw new CustomErrorException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    FAILED_WALLET_CREATION,
-                    POST_USER_API_PATH
-            );
-        }
     }
 }

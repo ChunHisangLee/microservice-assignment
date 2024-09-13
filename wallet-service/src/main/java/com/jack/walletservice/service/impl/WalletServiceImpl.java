@@ -4,6 +4,7 @@ import com.jack.walletservice.dto.WalletBalanceDTO;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.InsufficientFundsException;
 import com.jack.walletservice.exception.WalletNotFoundException;
+import com.jack.walletservice.message.WalletCreationMessage;
 import com.jack.walletservice.publisher.WalletBalancePublisher;
 import com.jack.walletservice.repository.WalletRepository;
 import com.jack.walletservice.service.WalletService;
@@ -79,6 +80,15 @@ public class WalletServiceImpl implements WalletService {
         updateCacheAndNotify(wallet);
 
         logger.info("Wallet credited and balance published for user ID: {}", userId);
+    }
+
+    @Override
+    public void createWallet(WalletCreationMessage message) {
+        // Create a wallet for the user
+        Wallet wallet = new Wallet();
+        wallet.setUserId(message.getUserId());
+        wallet.setUsdBalance(message.getInitialBalance());
+        walletRepository.save(wallet);
     }
 
     @Transactional
