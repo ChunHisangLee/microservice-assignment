@@ -1,6 +1,6 @@
 package com.jack.userservice.client;
 
-import com.jack.walletservice.message.WalletBalanceRequest;
+import com.jack.userservice.message.WalletBalanceRequest;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
