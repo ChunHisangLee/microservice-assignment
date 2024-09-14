@@ -1,4 +1,4 @@
-package com.jack.authservice.constants;
+package com.jack.common.constants;
 
 public class SecurityConstants {
     private SecurityConstants() {

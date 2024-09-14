@@ -1,4 +1,4 @@
-package com.jack.walletservice.dto;
+package com.jack.common.dto;
 
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WalletResponseDTO implements Serializable {
+public class WalletBalanceDTO implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private Long userId;

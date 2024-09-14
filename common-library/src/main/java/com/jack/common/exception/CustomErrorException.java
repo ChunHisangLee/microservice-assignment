@@ -1,4 +1,4 @@
-package com.jack.userservice.exception;
+package com.jack.common.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

@@ -28,6 +28,7 @@
         <module>price-service</module>
         <module>user-service</module>
         <module>wallet-service</module>
+        <module>common-library</module>
     </modules>
 
     <!-- Define common properties -->

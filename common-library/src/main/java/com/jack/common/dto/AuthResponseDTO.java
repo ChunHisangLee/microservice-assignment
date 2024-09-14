@@ -1,4 +1,4 @@
-package com.jack.authservice.dto;
+package com.jack.common.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

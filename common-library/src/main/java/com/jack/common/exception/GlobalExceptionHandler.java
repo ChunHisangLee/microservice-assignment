@@ -1,6 +1,6 @@
-package com.jack.userservice.exception;
+package com.jack.common.exception;
 
-import com.jack.userservice.response.CustomErrorResponse;
+import com.jack.walletservice.response.;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

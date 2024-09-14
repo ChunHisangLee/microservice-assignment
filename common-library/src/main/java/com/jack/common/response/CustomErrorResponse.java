@@ -1,4 +1,4 @@
-package com.jack.walletservice.response;
+package com.jack.common.response;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.jack.userservice.constants;
+package com.jack.common.constants;
 
 public class ErrorMessages {
     private ErrorMessages() {
