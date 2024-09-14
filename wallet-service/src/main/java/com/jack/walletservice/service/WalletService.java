@@ -1,12 +1,12 @@
 package com.jack.walletservice.service;
 
 import com.jack.walletservice.dto.WalletBalanceDTO;
+import com.jack.walletservice.dto.WalletCreateMessageDTO;
 import com.jack.walletservice.entity.Wallet;
-import com.jack.walletservice.message.WalletCreationMessage;
 
 public interface WalletService {
 
-    void createWallet(WalletCreationMessage message);
+    void createWallet(WalletCreateMessageDTO message);
 
     Wallet getWalletByUserId(Long userId);
 

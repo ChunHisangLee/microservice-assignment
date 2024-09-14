@@ -1,15 +1,16 @@
 package com.jack.walletservice.listener;
 
+import com.jack.walletservice.dto.WalletBalanceMessageDTO;
 import com.jack.walletservice.dto.WalletResponseDTO;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.WalletNotFoundException;
 import com.jack.walletservice.service.WalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,7 +26,8 @@ public class WalletBalanceListener {
     }
 
     @RabbitListener(queues = "${app.wallet.queue.balance}")
-    public void handleWalletBalanceRequest(Long userId, Message message) {
+    public void handleWalletBalanceRequest(WalletBalanceMessageDTO walletBalanceMessageDTO, Message message) {
+        Long userId = walletBalanceMessageDTO.getUserId();
         logger.info("Received Wallet Balance Request for UserID: {}", userId);
 
         // Get the replyTo queue from the message properties
@@ -34,6 +36,14 @@ public class WalletBalanceListener {
 
         if (replyToQueue == null) {
             logger.error("No reply-to queue specified in the message for user ID: {}", userId);
+            return;
+        }
+
+        // Validate userId
+        if (userId == null) {
+            logger.error("Invalid Wallet Balance Request: userId is null");
+            String errorMessage = "Invalid request: userId is null";
+            rabbitTemplate.convertAndSend(replyToQueue, errorMessage);
             return;
         }
 

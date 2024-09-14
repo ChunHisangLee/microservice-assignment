@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WalletRequestDTO {
+public class WalletUpdateMessageDTO {
     private Long userId;
     private double usdAmount;
     private double btcAmount;

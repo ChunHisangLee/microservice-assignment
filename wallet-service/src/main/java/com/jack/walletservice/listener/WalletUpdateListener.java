@@ -1,5 +1,6 @@
 package com.jack.walletservice.listener;
 
+import com.jack.walletservice.dto.WalletUpdateMessageDTO;
 import com.jack.walletservice.service.WalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,19 +18,22 @@ public class WalletUpdateListener {
     }
 
     @RabbitListener(queues = "${app.wallet.queue.update}")
-    public void handleWalletUpdate(Long userId, Double usdAmount, Double btcAmount) {
-        logger.info("Received Wallet Update for UserID: {}. USD: {}, BTC: {}", userId, usdAmount, btcAmount);
+    public void handleWalletUpdate(WalletUpdateMessageDTO message) {
+        logger.info("Received Wallet Update for UserID: {}. USD: {}, BTC: {}", message.getUserId(), message.getUsdAmount(), message.getBtcAmount());
 
         try {
-            if (usdAmount < 0 || btcAmount < 0) {
-                logger.error("Invalid update amounts for user ID: {}. USD: {}, BTC: {}. Amounts must be non-negative.", userId, usdAmount, btcAmount);
+            // Validate the incoming message before proceeding
+            if (message.getUsdAmount() < 0 || message.getBtcAmount() < 0) {
+                logger.error("Invalid update amounts for user ID: {}. USD: {}, BTC: {}. Amounts must be non-negative.",
+                        message.getUserId(), message.getUsdAmount(), message.getBtcAmount());
                 return;
             }
 
-            walletService.updateWallet(userId, usdAmount, btcAmount);
-            logger.info("Wallet updated successfully for user ID: {}", userId);
+            // Delegate the update logic to the WalletService
+            walletService.updateWallet(message.getUserId(), message.getUsdAmount(), message.getBtcAmount());
+            logger.info("Wallet updated successfully for user ID: {}", message.getUserId());
         } catch (Exception e) {
-            logger.error("Failed to update wallet for user ID: {}. Error: {}", userId, e.getMessage(), e);
+            logger.error("Failed to update wallet for user ID: {}. Error: {}", message.getUserId(), e.getMessage(), e);
         }
     }
 }
