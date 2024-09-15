@@ -1,12 +1,12 @@
 package com.jack.userservice.service.impl;
 
+import com.jack.common.dto.*;
+import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.client.WalletBalanceRequestSender;
-import com.jack.userservice.dto.*;
+import com.jack.userservice.dto.UsersDTO;
 import com.jack.userservice.entity.Users;
-import com.jack.userservice.exception.CustomErrorException;
 import com.jack.userservice.mapper.UsersMapper;
-import com.jack.userservice.message.WalletCreationMessage;
 import com.jack.userservice.outbox.OutboxDTO;
 import com.jack.userservice.outbox.OutboxService;
 import com.jack.userservice.repository.UsersRepository;
@@ -14,7 +14,6 @@ import com.jack.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-import static com.jack.userservice.constants.ErrorMessages.*;
+import static com.jack.common.constants.ErrorMessages.*;
 
 @Service
 @RequiredArgsConstructor

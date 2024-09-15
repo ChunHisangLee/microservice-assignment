@@ -1,8 +1,8 @@
 package com.jack.authservice.controller;
 
-import com.jack.authservice.constants.SecurityConstants;
-import com.jack.authservice.dto.AuthRequestDTO;
-import com.jack.authservice.dto.AuthResponseDTO;
+import com.jack.common.constants.SecurityConstants;
+import com.jack.common.dto.AuthRequestDTO;
+import com.jack.common.dto.AuthResponseDTO;
 import com.jack.authservice.service.AuthService;
 import com.jack.authservice.service.TokenService;
 import org.slf4j.Logger;

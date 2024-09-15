@@ -1,6 +1,6 @@
 package com.jack.authservice.security;
 
-import com.jack.authservice.constants.SecurityConstants;
+import com.jack.common.constants.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

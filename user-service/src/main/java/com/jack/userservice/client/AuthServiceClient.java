@@ -1,8 +1,8 @@
 package com.jack.userservice.client;
 
-import com.jack.userservice.constants.SecurityConstants;
-import com.jack.userservice.dto.AuthRequestDTO;
-import com.jack.userservice.dto.AuthResponseDTO;
+import com.jack.common.constants.SecurityConstants;
+import com.jack.common.dto.AuthRequestDTO;
+import com.jack.common.dto.AuthResponseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
