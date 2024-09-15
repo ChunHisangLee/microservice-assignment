@@ -1,7 +1,7 @@
 package com.jack.userservice.service;
 
-import com.jack.userservice.dto.UserRegistrationDTO;
-import com.jack.userservice.dto.UserResponseDTO;
+import com.jack.common.dto.UserRegistrationDTO;
+import com.jack.common.dto.UserResponseDTO;
 import com.jack.userservice.dto.UsersDTO;
 import com.jack.userservice.entity.Users;
 
