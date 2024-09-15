@@ -1,6 +1,7 @@
-package com.jack.userservice.outbox;
+package com.jack.userservice.repository;
 
 
+import com.jack.common.entity.Outbox;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

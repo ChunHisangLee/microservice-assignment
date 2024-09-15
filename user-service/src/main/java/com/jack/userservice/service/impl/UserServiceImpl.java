@@ -3,12 +3,12 @@ package com.jack.userservice.service.impl;
 import com.jack.common.dto.*;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
-import com.jack.userservice.client.WalletBalanceRequestSender;
 import com.jack.userservice.dto.UsersDTO;
 import com.jack.userservice.entity.Users;
+import com.jack.common.entity.Outbox;
+import com.jack.common.entity.EventStatus;
 import com.jack.userservice.mapper.UsersMapper;
-import com.jack.userservice.outbox.OutboxDTO;
-import com.jack.userservice.outbox.OutboxService;
+import com.jack.userservice.repository.OutboxRepository;
 import com.jack.userservice.repository.UsersRepository;
 import com.jack.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.jack.common.constants.ErrorMessages.*;
@@ -31,11 +32,10 @@ public class UserServiceImpl implements UserService {
 
     private final UsersRepository usersRepository;
     private final PasswordEncoder passwordEncoder;
-    private final OutboxService outboxService;
+    private final OutboxRepository outboxRepository; // Outbox repository for saving outbox events
     private final AuthServiceClient authServiceClient;
     private final UsersMapper usersMapper;
     private final RedisTemplate<String, WalletBalanceDTO> redisTemplate;
-    private final WalletBalanceRequestSender walletBalanceRequestSender;
 
     @Value("${app.wallet.cache-prefix}")
     private String cachePrefix;
@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
         // Encode the password before saving
         String encodedPassword = passwordEncoder.encode(registrationDTO.getPassword());
 
-        // Create a new user without encoding password, as auth-service will handle encryption
+        // Create a new user
         Users newUser = Users.builder()
                 .name(registrationDTO.getName())
                 .email(registrationDTO.getEmail())
@@ -65,17 +65,21 @@ public class UserServiceImpl implements UserService {
 
         // Programmatically log the user in by calling auth-service
         AuthRequestDTO authRequest = new AuthRequestDTO(savedUser.getEmail(), registrationDTO.getPassword());
-        AuthResponseDTO authResponse = authServiceClient.login(authRequest);  // Use Feign Client to call auth-service
+        AuthResponseDTO authResponse = authServiceClient.login(authRequest);
 
-        // Save a wallet creation message in the Outbox instead of directly sending it
-        Double initialBalance = 1000.00;
-        OutboxDTO outboxDTO = new OutboxDTO();
-        outboxDTO.setAggregateId(savedUser.getId());  // User ID
-        outboxDTO.setAggregateType("User");  // The type of entity related to the outbox
-        outboxDTO.setPayload("{ \"userId\": " + savedUser.getId() + ", \"initialBalance\": " + initialBalance + " }");
+        // Save a wallet creation message in the Outbox (No direct interaction with Outbox Service)
+        double initialBalance = 1000.00;
+        Outbox outboxEvent = Outbox.builder()
+                .aggregateId(savedUser.getId())  // User ID
+                .aggregateType("User")  // The type of entity related to the outbox
+                .payload("{ \"userId\": " + savedUser.getId() + ", \"initialBalance\": " + initialBalance + " }")
+                .routingKey(routingKey) // Use the routing key defined for wallet creation
+                .status(EventStatus.PENDING)  // Set initial status as PENDING
+                .createdAt(LocalDateTime.now())  // Event creation time
+                .build();
 
-        // Save outbox entry
-        outboxService.saveOutbox(outboxDTO);  // Asynchronous wallet creation
+        // Save the outbox event in the local outbox table
+        outboxRepository.save(outboxEvent);  // The separate Outbox Service will pick this up
 
         // Return user details and JWT token
         return UserResponseDTO.builder()
@@ -159,7 +163,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UsersDTO getUserWithBalance(Long userId) {
-        // Check if user exists
         Users user = usersRepository.findById(userId)
                 .orElseThrow(() -> new CustomErrorException(HttpStatus.NOT_FOUND, USER_NOT_FOUND, GET_USER_API_PATH + userId));
 
@@ -175,13 +178,8 @@ public class UserServiceImpl implements UserService {
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
         } else {
             logger.warn("Balance not found in Redis for user ID: {}", userId);
-
-            // Option 1: Send balance request to wallet-service via RabbitMQ
-            walletBalanceRequestSender.sendBalanceRequest(userId);
-
-            // Option 2: Set default balance values (avoid nulls)
-            usersDTO.setUsdBalance(0.0);  // Use 0.0 as the default value
-            usersDTO.setBtcBalance(0.0);  // Use 0.0 as the default value
+            usersDTO.setUsdBalance(0.0);  // Default balance
+            usersDTO.setBtcBalance(0.0);
         }
 
         return usersDTO;

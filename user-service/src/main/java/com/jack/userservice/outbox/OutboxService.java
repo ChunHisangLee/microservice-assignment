@@ -1,7 +1,9 @@
 package com.jack.userservice.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jack.common.entity.Outbox;
 import com.jack.userservice.message.WalletCreationMessage;
+import com.jack.userservice.repository.OutboxRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;

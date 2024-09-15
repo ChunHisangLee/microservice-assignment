@@ -1,5 +1,7 @@
 package com.jack.userservice.outbox;
 
+import com.jack.common.entity.Outbox;
+
 public class OutboxMapper {
 
     // Map OutboxDTO to Outbox entity

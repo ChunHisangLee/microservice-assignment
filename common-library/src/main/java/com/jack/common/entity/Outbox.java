@@ -1,20 +1,18 @@
-package com.jack.userservice.outbox;
+package com.jack.common.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "outbox", indexes = {
-        @Index(name = "idx_aggregate_type", columnList = "aggregate_type"),
-        @Index(name = "idx_processed", columnList = "processed")
+        @Index(name = "idx_aggregate_type", columnList = "aggregateType"),
+        @Index(name = "idx_status", columnList = "status")
 })
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Outbox {
@@ -33,12 +31,19 @@ public class Outbox {
     @Column(nullable = false)
     private String payload;
 
+    @Column(name = "routing_key", nullable = false)
+    private String routingKey;
+
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false)
-    private boolean processed = false;
-
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventStatus status = EventStatus.PENDING;
 }
+
