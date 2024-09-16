@@ -1,7 +1,7 @@
 package com.jack.userservice.client;
 
 import com.jack.common.constants.SecurityConstants;
-import com.jack.common.dto.AuthRequestDTO;
+import com.jack.common.dto.AuthRequestDto;
 import com.jack.common.dto.AuthResponseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface AuthServiceClient {
 
     @PostMapping("/api/auth/login")
-    AuthResponseDTO login(@RequestBody AuthRequestDTO authRequestDTO);
+    AuthResponseDTO login(@RequestBody AuthRequestDto authRequestDTO);
 
     @PostMapping("/api/auth/logout")
     void logout(@RequestHeader(SecurityConstants.AUTHORIZATION_HEADER) String token);

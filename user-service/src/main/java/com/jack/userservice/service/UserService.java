@@ -1,14 +1,14 @@
 package com.jack.userservice.service;
 
-import com.jack.common.dto.UserRegistrationDTO;
-import com.jack.common.dto.UserResponseDTO;
+import com.jack.common.dto.UserRegistrationDto;
+import com.jack.common.dto.UserResponseDto;
 import com.jack.userservice.dto.UsersDTO;
 import com.jack.userservice.entity.Users;
 
 import java.util.Optional;
 
 public interface UserService {
-    UserResponseDTO register(UserRegistrationDTO registrationDTO);
+    UserResponseDto register(UserRegistrationDto registrationDTO);
 
     Optional<Users> updateUser(Long id, Users users);
 

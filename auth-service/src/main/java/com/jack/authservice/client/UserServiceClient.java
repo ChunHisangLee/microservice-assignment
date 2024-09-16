@@ -1,6 +1,6 @@
 package com.jack.authservice.client;
 
-import com.jack.common.dto.AuthRequestDTO;
+import com.jack.common.dto.AuthRequestDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface UserServiceClient {
 
     @PostMapping("/api/users/verify-password")
-    Boolean verifyPassword(@RequestBody AuthRequestDTO authRequestDTO);
+    Boolean verifyPassword(@RequestBody AuthRequestDto authRequestDTO);
 }

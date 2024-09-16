@@ -1,7 +1,7 @@
 package com.jack.authservice.service.impl;
 
 import com.jack.authservice.client.UserServiceClient;
-import com.jack.common.dto.AuthRequestDTO;
+import com.jack.common.dto.AuthRequestDto;
 import com.jack.common.dto.AuthResponseDTO;
 import com.jack.authservice.security.JwtTokenProvider;
 import com.jack.authservice.service.AuthService;
@@ -25,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponseDTO login(AuthRequestDTO authRequestDTO) {
+    public AuthResponseDTO login(AuthRequestDto authRequestDTO) {
         logger.info("Attempting to authenticate user with email: {}", authRequestDTO.getEmail());
         // Delegate password validation to the user-service
         boolean isPasswordValid = userServiceClient.verifyPassword(authRequestDTO);

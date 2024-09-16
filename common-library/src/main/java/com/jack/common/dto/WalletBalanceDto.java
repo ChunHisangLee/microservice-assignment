@@ -10,7 +10,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WalletResponseDTO implements Serializable {
+public class WalletBalanceDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private Long userId;

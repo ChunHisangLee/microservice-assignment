@@ -1,7 +1,7 @@
 package com.jack.authservice.controller;
 
 import com.jack.common.constants.SecurityConstants;
-import com.jack.common.dto.AuthRequestDTO;
+import com.jack.common.dto.AuthRequestDto;
 import com.jack.common.dto.AuthResponseDTO;
 import com.jack.authservice.service.AuthService;
 import com.jack.authservice.service.TokenService;
@@ -25,7 +25,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDTO authRequestDTO) {
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDto authRequestDTO) {
         AuthResponseDTO authResponse = authService.login(authRequestDTO);
         logger.info("User {} logged in successfully", authRequestDTO.getEmail());
         return ResponseEntity.ok(authResponse);

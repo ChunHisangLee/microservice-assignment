@@ -1,9 +1,8 @@
 package com.jack.common.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Getter
+
 public class CustomErrorException extends RuntimeException {
     private final int statusCode;
     private final String status;
@@ -17,5 +16,22 @@ public class CustomErrorException extends RuntimeException {
         this.status = httpStatus.getReasonPhrase();  // Use the standard reason phrase for the status
         this.message = message;
         this.path = path;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+
+    public String getPath() {
+        return path;
     }
 }

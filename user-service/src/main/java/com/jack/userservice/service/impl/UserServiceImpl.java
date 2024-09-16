@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
     private final OutboxRepository outboxRepository; // Outbox repository for saving outbox events
     private final AuthServiceClient authServiceClient;
     private final UsersMapper usersMapper;
-    private final RedisTemplate<String, WalletBalanceDTO> redisTemplate;
+    private final RedisTemplate<String, WalletBalanceDto> redisTemplate;
 
     @Value("${app.wallet.cache-prefix}")
     private String cachePrefix;
@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     private String routingKey;
 
     @Override
-    public UserResponseDTO register(UserRegistrationDTO registrationDTO) {
+    public UserResponseDto register(UserRegistrationDto registrationDTO) {
         // Check if user already exists
         if (usersRepository.findByEmail(registrationDTO.getEmail()).isPresent()) {
             logger.error("User registration failed. User with email '{}' already exists", registrationDTO.getEmail());
@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
         outboxRepository.save(outboxEvent);  // The separate Outbox Service will pick this up
 
         // Return user details and JWT token
-        return UserResponseDTO.builder()
+        return UserResponseDto.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
                 .token(authResponse.getToken())  // Include JWT token in the response
@@ -170,7 +170,7 @@ public class UserServiceImpl implements UserService {
 
         // Fetch balance from Redis (updated by wallet-service)
         String cacheKey = cachePrefix + userId;
-        WalletBalanceDTO cachedBalance = redisTemplate.opsForValue().get(cacheKey);
+        WalletBalanceDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedBalance != null) {
             logger.info("Returning balance from Redis for user ID: {}", userId);

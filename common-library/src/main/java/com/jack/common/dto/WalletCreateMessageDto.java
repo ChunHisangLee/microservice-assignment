@@ -1,16 +1,15 @@
 package com.jack.common.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponseDTO {
-    private Long id;
-    private String email;
-    private String token;
+public class WalletCreateMessageDto implements Serializable {
+    private Long userId;
+    private Double initialBalance;
 }

@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WalletBalanceMessageDTO {
+public class WalletBalanceMessageDto {
     private Long userId;
 }

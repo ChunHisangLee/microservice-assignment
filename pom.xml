@@ -71,6 +71,7 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- Common Library Module -->
             <dependency>
                 <groupId>com.jack</groupId>
                 <artifactId>common-library</artifactId>
