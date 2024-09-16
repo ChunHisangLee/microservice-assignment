@@ -1,6 +1,8 @@
 package com.jack.userservice.service.impl;
 
-import com.jack.common.dto.*;
+import com.jack.common.dto.response.UserRegistrationDto;
+import com.jack.common.dto.response.UserResponseDto;
+import com.jack.common.dto.response.WalletBalanceDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.dto.UsersDTO;

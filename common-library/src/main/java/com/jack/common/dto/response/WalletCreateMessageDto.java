@@ -1,12 +1,12 @@
-package com.jack.common.dto;
+package com.jack.common.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 
-@Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class WalletCreateMessageDto implements Serializable {
