@@ -70,6 +70,12 @@
                 <version>1.5.3.Final</version>
                 <scope>provided</scope>
             </dependency>
+
+            <dependency>
+                <groupId>com.jack</groupId>
+                <artifactId>common-library</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -117,12 +123,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.3.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.jack</groupId>
-            <artifactId>common-library</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
