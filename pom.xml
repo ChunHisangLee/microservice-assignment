@@ -16,11 +16,9 @@
     <groupId>com.jack</groupId>
     <artifactId>microservice-assignment</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>microservice-assignment</name>
     <description>Microservice Assignment Parent Project</description>
-
-    <!-- This project is a POM, not a JAR or WAR -->
-    <packaging>pom</packaging>
 
     <!-- Define all sub-modules (microservices) -->
     <modules>
@@ -60,19 +58,23 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- MapStruct Dependencies -->
+            <!-- MapStruct for DTO mapping -->
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
-                <version>1.5.3.Final</version> <!-- Use latest stable version -->
+                <version>1.5.3.Final</version>
             </dependency>
-
-            <!-- MapStruct Processor for Code Generation -->
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct-processor</artifactId>
                 <version>1.5.3.Final</version>
-                <scope>provided</scope> <!-- To ensure processor is available at compile time -->
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.jack</groupId>
+                <artifactId>common-library</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -122,40 +124,31 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.3.0</version>
         </dependency>
-
-        <!-- DevTools for Development -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 
-    <!-- Build configuration for all modules -->
+    <!-- Common build configuration for all modules -->
     <build>
         <plugins>
-            <!-- Spring Boot Maven Plugin for building Spring Boot applications -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.5.3.Final</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                        <annotationProcessorPaths>
-                            <path>
-                                <groupId>org.mapstruct</groupId>
-                                <artifactId>mapstruct-processor</artifactId>
-                                <version>1.5.3.Final</version>
-                            </path>
-                        </annotationProcessorPaths>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>
