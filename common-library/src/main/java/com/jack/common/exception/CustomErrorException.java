@@ -2,7 +2,6 @@ package com.jack.common.exception;
 
 import org.springframework.http.HttpStatus;
 
-
 public class CustomErrorException extends RuntimeException {
     private final int statusCode;
     private final String status;
