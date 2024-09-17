@@ -1,3 +1,7 @@
+openapi:
+  title: "User Service API"
+  version: "v1"
+
 spring:
   rabbitmq:
     host: localhost  # Local RabbitMQ

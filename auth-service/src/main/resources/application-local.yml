@@ -1,3 +1,7 @@
+openapi:
+  title: "Auth Service API"
+  version: "v1"
+
 spring:
   data:
     redis:

@@ -1,4 +1,4 @@
-package com.jack.common.entity;
+package com.jack.common.constants;
 
 public enum EventStatus {
     PENDING,

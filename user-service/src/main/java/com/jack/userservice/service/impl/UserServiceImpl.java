@@ -8,7 +8,7 @@ import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.dto.UsersDTO;
 import com.jack.userservice.entity.Users;
 import com.jack.common.entity.Outbox;
-import com.jack.common.entity.EventStatus;
+import com.jack.common.constants.EventStatus;
 import com.jack.userservice.mapper.UsersMapper;
 import com.jack.userservice.repository.OutboxRepository;
 import com.jack.userservice.repository.UsersRepository;

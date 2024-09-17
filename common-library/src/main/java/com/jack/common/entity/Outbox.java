@@ -1,5 +1,6 @@
 package com.jack.common.entity;
 
+import com.jack.common.constants.EventStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
