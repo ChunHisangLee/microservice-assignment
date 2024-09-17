@@ -1,5 +1,6 @@
 package com.jack.userservice.config;
 
+import com.jack.common.config.RedisCommonConfig;
 import com.jack.userservice.dto.UsersDTO;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,12 +10,12 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-public class RedisConfig {
+public class RedisConfig extends RedisCommonConfig {
 
     @Bean
-    public RedisTemplate<String, UsersDTO> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, UsersDTO> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, UsersDTO> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(connectionFactory);
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
 
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());

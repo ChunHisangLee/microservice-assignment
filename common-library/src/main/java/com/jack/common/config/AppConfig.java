@@ -1,4 +1,4 @@
-package com.jack.authservice.config;
+package com.jack.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
