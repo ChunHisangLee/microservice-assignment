@@ -48,7 +48,7 @@ public class TokenServiceImpl implements TokenService {
             Boolean isTokenBlacklisted = redisTemplate.hasKey(BLACKLIST_PREFIX + token);
             if (Boolean.TRUE.equals(isTokenBlacklisted)) {
                 logger.info("Token is already blacklisted: {}", token);
-                return;  // Exit early if token is already blacklisted
+                return;  // Exit early if token is already blocklisted
             }
 
             // Get token expiration duration

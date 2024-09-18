@@ -1,7 +1,7 @@
 package com.jack.walletservice.listener;
 
-import com.jack.walletservice.dto.WalletBalanceMessageDTO;
-import com.jack.walletservice.dto.WalletResponseDTO;
+import com.jack.common.dto.response.WalletBalanceMessageDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.WalletNotFoundException;
 import com.jack.walletservice.service.WalletService;
@@ -26,8 +26,8 @@ public class WalletBalanceListener {
     }
 
     @RabbitListener(queues = "${app.wallet.queue.balance}")
-    public void handleWalletBalanceRequest(WalletBalanceMessageDTO walletBalanceMessageDTO, Message message) {
-        Long userId = walletBalanceMessageDTO.getUserId();
+    public void handleWalletBalanceRequest(WalletBalanceMessageDto WalletBalanceMessageDto, Message message) {
+        Long userId = WalletBalanceMessageDto.getUserId();
         logger.info("Received Wallet Balance Request for UserID: {}", userId);
 
         // Get the replyTo queue from the message properties
@@ -50,7 +50,7 @@ public class WalletBalanceListener {
         try {
             Wallet wallet = walletService.getWalletByUserId(userId);
 
-            WalletResponseDTO responseDTO = WalletResponseDTO.builder()
+            WalletResponseDto responseDTO = WalletResponseDto.builder()
                     .userId(wallet.getUserId())
                     .usdBalance(wallet.getUsdBalance())
                     .btcBalance(wallet.getBtcBalance())
