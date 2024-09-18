@@ -13,13 +13,10 @@ public interface OutboxMapper {
 
     // Map OutboxDto to Outbox entity
     @Mapping(target = "status", expression = "java(mapProcessedToEventStatus(dto.isProcessed()))")
-    @Mapping(target = "routingKey", source = "routingKey")
-    // Added routingKey mapping
     Outbox toEntity(OutboxDto dto);
 
     // Map Outbox entity to OutboxDto
     @Mapping(target = "processed", expression = "java(mapEventStatusToProcessed(entity.getStatus()))")
-    @Mapping(target = "routingKey", source = "routingKey")
     OutboxDto toDto(Outbox entity);
 
     // Helper method to map boolean 'processed' to EventStatus

@@ -24,8 +24,8 @@ public class WalletBalancePublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void publishWalletBalance(WalletBalanceDto WalletBalanceDto) {
-        rabbitTemplate.convertAndSend(walletExchange, walletBalanceRoutingKey, WalletBalanceDto);
-        logger.info("Published wallet balance for user ID: {} to RabbitMQ", WalletBalanceDto.getUserId());
+    public void publishWalletBalance(WalletBalanceDto walletBalanceDto) {
+        rabbitTemplate.convertAndSend(walletExchange, walletBalanceRoutingKey, walletBalanceDto);
+        logger.info("Published wallet balance for user ID: {} to RabbitMQ", walletBalanceDto.getUserId());
     }
 }

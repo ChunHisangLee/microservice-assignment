@@ -1,16 +1,12 @@
 package com.jack.priceservice.dto;
 
-
-import lombok.*;
-
+import lombok.Data;
+import lombok.Builder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class BTCPriceHistoryDto {
     private Long id;
     private BigDecimal price;

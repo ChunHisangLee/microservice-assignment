@@ -2,26 +2,17 @@ package com.jack.priceservice.mapper;
 
 import com.jack.priceservice.dto.BTCPriceHistoryDto;
 import com.jack.priceservice.entity.BTCPriceHistory;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+@Mapper
+public interface BTCPriceHistoryMapper {
 
-@Component
-public class BTCPriceHistoryMapper {
+    BTCPriceHistoryMapper INSTANCE = Mappers.getMapper(BTCPriceHistoryMapper.class);
 
-    public BTCPriceHistoryDto toDto(BTCPriceHistory btcPriceHistory) {
-        return BTCPriceHistoryDto.builder()
-                .id(btcPriceHistory.getId())
-                .price(btcPriceHistory.getPrice())
-                .timestamp(btcPriceHistory.getTimestamp())
-                .build();
-    }
+    // Automatically map between the entity and DTO
+    BTCPriceHistoryDto toDto(BTCPriceHistory btcPriceHistory);
 
-    public BTCPriceHistory toEntity(BTCPriceHistoryDto btcPriceHistoryDTO) {
-        return BTCPriceHistory.builder()
-                .price(btcPriceHistoryDTO.getPrice())
-                .timestamp(Optional.ofNullable(btcPriceHistoryDTO.getTimestamp()).orElse(LocalDateTime.now()))
-                .build();
-    }
+    BTCPriceHistory toEntity(BTCPriceHistoryDto btcPriceHistoryDTO);
 }
