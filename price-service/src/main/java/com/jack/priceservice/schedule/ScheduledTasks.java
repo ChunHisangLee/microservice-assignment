@@ -4,7 +4,6 @@ import com.jack.priceservice.entity.BTCPriceHistory;
 import com.jack.priceservice.repository.BTCPriceHistoryRepository;
 import com.jack.priceservice.service.PriceService;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -21,10 +20,8 @@ public class ScheduledTasks {
     private static final double PRICE_INCREMENT = 10;
     public static final int SCHEDULE_RATE_MS = 5 * 1000;
 
-    @Getter
     private boolean isIncreasing = true;
 
-    @Getter
     private double currentPrice = MIN_PRICE;
 
     private final PriceService priceService;
