@@ -99,6 +99,7 @@
             <artifactId>common-library</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>com.jack</groupId>
             <artifactId>outbox-service</artifactId>

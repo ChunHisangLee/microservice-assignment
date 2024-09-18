@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BTCPriceHistoryDTO {
+public class BTCPriceHistoryDto {
     private Long id;
     private BigDecimal price;
     private LocalDateTime timestamp;

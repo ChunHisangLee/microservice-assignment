@@ -100,12 +100,6 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-
         <!-- Springdoc OpenAPI for Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>

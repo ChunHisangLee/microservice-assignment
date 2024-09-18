@@ -1,5 +1,6 @@
 package com.jack.outboxservice.mapper;
 
+import com.jack.common.constants.EventStatus;
 import com.jack.outboxservice.dto.OutboxDto;
 import com.jack.outboxservice.entity.Outbox;
 import org.mapstruct.Mapper;
@@ -11,10 +12,23 @@ public interface OutboxMapper {
     OutboxMapper INSTANCE = Mappers.getMapper(OutboxMapper.class);
 
     // Map OutboxDto to Outbox entity
-    @Mapping(target = "status", expression = "java(dto.isProcessed() ? EventStatus.PROCESSED : EventStatus.PENDING)")
+    @Mapping(target = "status", expression = "java(mapProcessedToEventStatus(dto.isProcessed()))")
+    @Mapping(target = "routingKey", source = "routingKey")
+    // Added routingKey mapping
     Outbox toEntity(OutboxDto dto);
 
     // Map Outbox entity to OutboxDto
-    @Mapping(target = "processed", expression = "java(entity.getStatus() != EventStatus.PENDING)")
+    @Mapping(target = "processed", expression = "java(mapEventStatusToProcessed(entity.getStatus()))")
+    @Mapping(target = "routingKey", source = "routingKey")
     OutboxDto toDto(Outbox entity);
+
+    // Helper method to map boolean 'processed' to EventStatus
+    default EventStatus mapProcessedToEventStatus(boolean processed) {
+        return processed ? EventStatus.PROCESSED : EventStatus.PENDING;
+    }
+
+    // Helper method to map EventStatus to boolean 'processed'
+    default boolean mapEventStatusToProcessed(EventStatus status) {
+        return status == EventStatus.PROCESSED;
+    }
 }

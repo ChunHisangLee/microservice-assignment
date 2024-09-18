@@ -1,16 +1,16 @@
 package com.jack.walletservice.mapper;
 
-import com.jack.walletservice.dto.WalletDTO;
+import com.jack.walletservice.dto.WalletDto;
 import com.jack.walletservice.entity.Wallet;
 import org.springframework.stereotype.Component;
 
 @Component
 public class WalletMapper {
-    public WalletDTO toDto(Wallet wallet) {
+    public WalletDto toDto(Wallet wallet) {
         if (wallet == null) {
             return null;
         }
-        return WalletDTO.builder()
+        return WalletDto.builder()
                 .id(wallet.getId())
                 .userId(wallet.getUserId())
                 .usdBalance(wallet.getUsdBalance())
@@ -18,7 +18,7 @@ public class WalletMapper {
                 .build();
     }
 
-    public Wallet toEntity(WalletDTO walletDTO) {
+    public Wallet toEntity(WalletDto walletDTO) {
         if (walletDTO == null) {
             return null;
         }

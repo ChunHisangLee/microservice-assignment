@@ -13,7 +13,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig extends RedisCommonConfig {
 
     @Bean
-    public RedisTemplate<String, UsersDto> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, UsersDto> redisUsersTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, UsersDto> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 

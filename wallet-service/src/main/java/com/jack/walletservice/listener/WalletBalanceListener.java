@@ -26,8 +26,8 @@ public class WalletBalanceListener {
     }
 
     @RabbitListener(queues = "${app.wallet.queue.balance}")
-    public void handleWalletBalanceRequest(WalletBalanceMessageDto WalletBalanceMessageDto, Message message) {
-        Long userId = WalletBalanceMessageDto.getUserId();
+    public void handleWalletBalanceRequest(WalletBalanceMessageDto walletBalanceMessageDto, Message message) {
+        Long userId = walletBalanceMessageDto.getUserId();
         logger.info("Received Wallet Balance Request for UserID: {}", userId);
 
         // Get the replyTo queue from the message properties

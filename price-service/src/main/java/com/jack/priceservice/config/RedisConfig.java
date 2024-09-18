@@ -15,9 +15,8 @@ public class RedisConfig extends RedisCommonConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
 
-    @Bean
-    @Override
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    @Bean("redisTemplateObject")  // Give this bean a unique name
+    public RedisTemplate<String, Object> redisTemplateObject(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());

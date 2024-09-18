@@ -14,7 +14,7 @@
     </parent>
 
     <artifactId>common-library</artifactId>
-    <version>0.0.1-SNAPSHOT</version> <!-- Version of this module -->
+    <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging> <!-- Ensures this module is packaged as a JAR -->
 
     <properties>
