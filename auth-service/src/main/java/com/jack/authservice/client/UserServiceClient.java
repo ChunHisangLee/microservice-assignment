@@ -1,6 +1,6 @@
 package com.jack.authservice.client;
 
-import com.jack.common.dto.AuthRequestDto;
+import com.jack.common.dto.request.AuthRequestDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

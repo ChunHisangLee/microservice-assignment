@@ -1,8 +1,8 @@
 package com.jack.authservice.service.impl;
 
 import com.jack.authservice.client.UserServiceClient;
-import com.jack.common.dto.AuthRequestDto;
-import com.jack.common.dto.AuthResponseDTO;
+import com.jack.common.dto.request.AuthRequestDto;
+import com.jack.common.dto.response.AuthResponseDTO;
 import com.jack.authservice.security.JwtTokenProvider;
 import com.jack.authservice.service.AuthService;
 import org.slf4j.Logger;
