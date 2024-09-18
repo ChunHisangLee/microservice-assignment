@@ -11,7 +11,11 @@ public enum ErrorPath {
     POST_USER_API(10002, "POST /api/users", HttpStatus.NOT_FOUND),
     PUT_USER_API(10003, "PUT /api/users/", HttpStatus.BAD_REQUEST),
     DELETE_USER_API(10004, "DELETE /api/users", HttpStatus.BAD_REQUEST),
-    POST_LOGIN_API(10005, "POST /api/users/login", HttpStatus.NOT_FOUND);
+    POST_LOGIN_API(10005, "POST /api/users/login", HttpStatus.NOT_FOUND),
+    GET_LOGOUT_API(10006, "GET /api/users/logout", HttpStatus.UNAUTHORIZED),
+    POST_REGISTER_API(10007, "POST /api/users/register", HttpStatus.BAD_REQUEST),
+    POST_VERIFY_PASSWORD_API(10008, "POST /api/users/verify-password", HttpStatus.BAD_REQUEST),
+    POST_LOGOUT_API(10009, "POST /api/users/logout", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int code;
     private final String path;

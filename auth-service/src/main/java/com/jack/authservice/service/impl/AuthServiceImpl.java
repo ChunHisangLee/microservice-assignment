@@ -2,7 +2,7 @@ package com.jack.authservice.service.impl;
 
 import com.jack.authservice.client.UserServiceClient;
 import com.jack.common.dto.request.AuthRequestDto;
-import com.jack.common.dto.response.AuthResponseDTO;
+import com.jack.common.dto.response.AuthResponseDto;
 import com.jack.authservice.security.JwtTokenProvider;
 import com.jack.authservice.service.AuthService;
 import org.slf4j.Logger;
@@ -25,20 +25,20 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponseDTO login(AuthRequestDto authRequestDTO) {
-        logger.info("Attempting to authenticate user with email: {}", authRequestDTO.getEmail());
+    public AuthResponseDto login(AuthRequestDto authRequestDto) {
+        logger.info("Attempting to authenticate user with email: {}", authRequestDto.getEmail());
         // Delegate password validation to the user-service
-        boolean isPasswordValid = userServiceClient.verifyPassword(authRequestDTO);
+        boolean isPasswordValid = userServiceClient.verifyPassword(authRequestDto);
 
         if (!isPasswordValid) {
-            logger.error("Invalid credentials for user: {}", authRequestDTO.getEmail());
+            logger.error("Invalid credentials for user: {}", authRequestDto.getEmail());
             throw new BadCredentialsException("Invalid username or password.");
         }
 
         // If valid, generate JWT token
-        String jwt = jwtTokenProvider.generateTokenFromEmail(authRequestDTO.getEmail());
-        logger.info("Generated JWT token for user: {}", authRequestDTO.getEmail());
-        return AuthResponseDTO.builder()
+        String jwt = jwtTokenProvider.generateTokenFromEmail(authRequestDto.getEmail());
+        logger.info("Generated JWT token for user: {}", authRequestDto.getEmail());
+        return AuthResponseDto.builder()
                 .token(jwt)
                 .tokenType("Bearer")  // Default token type is Bearer
                 .expiresIn(JWT_EXPIRATION_MS)  // 1-hour expiration time

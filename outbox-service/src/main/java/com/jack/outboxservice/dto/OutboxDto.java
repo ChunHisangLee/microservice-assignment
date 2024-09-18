@@ -1,4 +1,4 @@
-package com.jack.userservice.outbox;
+package com.jack.outboxservice.dto;
 
 import lombok.*;
 
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutboxDTO {
+public class OutboxDto {
 
     private Long id;
     private Long aggregateId;

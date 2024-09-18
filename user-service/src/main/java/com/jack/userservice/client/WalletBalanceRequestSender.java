@@ -1,6 +1,6 @@
 package com.jack.userservice.client;
 
-import com.jack.userservice.message.WalletBalanceRequest;
+import com.jack.common.dto.response.WalletBalanceMessageDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,8 @@ public class WalletBalanceRequestSender {
     }
 
     public void sendBalanceRequest(Long userId) {
-        WalletBalanceRequest request = WalletBalanceRequest.builder()
+        // Build the new WalletBalanceMessageDto instead of WalletBalanceRequest
+        WalletBalanceMessageDto request = WalletBalanceMessageDto.builder()
                 .userId(userId)
                 .build();
 

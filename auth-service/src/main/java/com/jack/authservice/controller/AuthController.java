@@ -2,7 +2,7 @@ package com.jack.authservice.controller;
 
 import com.jack.common.constants.SecurityConstants;
 import com.jack.common.dto.request.AuthRequestDto;
-import com.jack.common.dto.response.AuthResponseDTO;
+import com.jack.common.dto.response.AuthResponseDto;
 import com.jack.authservice.service.AuthService;
 import com.jack.authservice.service.TokenService;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDto authRequestDTO) {
-        AuthResponseDTO authResponse = authService.login(authRequestDTO);
+    public ResponseEntity<AuthResponseDto> login(@RequestBody AuthRequestDto authRequestDTO) {
+        AuthResponseDto authResponse = authService.login(authRequestDTO);
         logger.info("User {} logged in successfully", authRequestDTO.getEmail());
         return ResponseEntity.ok(authResponse);
     }

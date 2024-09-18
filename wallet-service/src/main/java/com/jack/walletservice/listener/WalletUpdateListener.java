@@ -1,6 +1,6 @@
 package com.jack.walletservice.listener;
 
-import com.jack.walletservice.dto.WalletUpdateMessageDTO;
+import com.jack.common.dto.response.WalletUpdateMessageDto;
 import com.jack.walletservice.service.WalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ public class WalletUpdateListener {
     }
 
     @RabbitListener(queues = "${app.wallet.queue.update}")
-    public void handleWalletUpdate(WalletUpdateMessageDTO message) {
+    public void handleWalletUpdate(WalletUpdateMessageDto message) {
         logger.info("Received Wallet Update for UserID: {}. USD: {}, BTC: {}", message.getUserId(), message.getUsdAmount(), message.getBtcAmount());
 
         try {

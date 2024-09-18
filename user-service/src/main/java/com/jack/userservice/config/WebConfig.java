@@ -1,6 +1,6 @@
 package com.jack.userservice.config;
 
-import com.jack.userservice.constants.SecurityConstants;
+import com.jack.common.constants.SecurityConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;

@@ -1,8 +1,8 @@
-package com.jack.userservice.outbox;
+package com.jack.outboxservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.common.entity.Outbox;
-import com.jack.userservice.message.WalletCreationMessage;
+import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.userservice.repository.OutboxRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +45,7 @@ public class OutboxService {
         for (Outbox outbox : unprocessedMessages) {
             try {
                 // Deserialize the message payload into WalletCreationMessage
-                WalletCreationMessage message = objectMapper.readValue(outbox.getPayload(), WalletCreationMessage.class);
+                WalletCreateMessageDto message = objectMapper.readValue(outbox.getPayload(), WalletCreateMessageDto.class);
 
                 // Send the message to RabbitMQ
                 rabbitTemplate.convertAndSend(walletCreationQueue, message);

@@ -1,4 +1,4 @@
-package com.jack.common.entity;
+package com.jack.outboxservice.entity;
 
 import com.jack.common.constants.EventStatus;
 import jakarta.persistence.*;

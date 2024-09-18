@@ -1,5 +1,7 @@
-package com.jack.userservice.outbox;
+package com.jack.outboxservice.controller;
 
+import com.jack.outboxservice.dto.OutboxDto;
+import com.jack.outboxservice.service.OutboxService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,15 +17,15 @@ public class OutboxController {
 
     // Endpoint to save a new outbox entry
     @PostMapping
-    public ResponseEntity<OutboxDTO> createOutbox(@RequestBody OutboxDTO outboxDTO) {
-        OutboxDTO savedOutbox = outboxService.saveOutbox(outboxDTO);
+    public ResponseEntity<OutboxDto> createOutbox(@RequestBody OutboxDto outboxDTO) {
+        OutboxDto savedOutbox = outboxService.saveOutbox(outboxDTO);
         return ResponseEntity.ok(savedOutbox);
     }
 
     // Endpoint to fetch an outbox entry by id
     @GetMapping("/{id}")
-    public ResponseEntity<OutboxDTO> getOutboxById(@PathVariable Long id) {
-        OutboxDTO outbox = outboxService.getOutboxById(id);
+    public ResponseEntity<OutboxDto> getOutboxById(@PathVariable Long id) {
+        OutboxDto outbox = outboxService.getOutboxById(id);
         return ResponseEntity.ok(outbox);
     }
 }

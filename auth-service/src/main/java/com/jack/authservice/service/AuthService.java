@@ -1,8 +1,8 @@
 package com.jack.authservice.service;
 
 import com.jack.common.dto.request.AuthRequestDto;
-import com.jack.common.dto.response.AuthResponseDTO;
+import com.jack.common.dto.response.AuthResponseDto;
 
 public interface AuthService {
-    AuthResponseDTO login(AuthRequestDto authRequestDTO);;
+    AuthResponseDto login(AuthRequestDto authRequestDTO);;
 }

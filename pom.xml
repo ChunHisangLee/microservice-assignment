@@ -23,12 +23,12 @@
     <!-- Define all sub-modules (microservices) -->
     <modules>
         <module>auth-service</module>
+        <module>common-library</module>
         <module>outbox-service</module>
         <module>price-service</module>
         <module>transaction-service</module>
         <module>user-service</module>
         <module>wallet-service</module>
-        <module>common-library</module>
     </modules>
 
     <!-- Define common properties -->
@@ -94,13 +94,6 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- Lombok for reducing boilerplate code -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope> <!-- Lombok as provided scope -->
-        </dependency>
-
         <!-- Actuator for Monitoring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -163,15 +156,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.mapstruct</groupId>
-                            <artifactId>mapstruct-processor</artifactId>
-                            <version>1.5.3.Final</version>
-                        </path>
-                    </annotationProcessorPaths>
+                    <source>21</source>
+                    <target>21</target>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <plugin>

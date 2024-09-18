@@ -8,8 +8,6 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class WalletResponseDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
