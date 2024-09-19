@@ -33,12 +33,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- RabbitMQ support -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
-
         <!-- JWT authentication -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -68,12 +62,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.jack</groupId>
-            <artifactId>common-library</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

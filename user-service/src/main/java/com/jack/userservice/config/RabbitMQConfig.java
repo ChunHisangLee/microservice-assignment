@@ -39,29 +39,34 @@ public class RabbitMQConfig {
     // Define queues
     @Bean
     public Queue walletCreateQueue() {
+        logger.info("Creating queue: {}", walletCreateQueue);
         return new Queue(walletCreateQueue, true); // Durable queue for persistence
     }
 
 
     @Bean
     public Queue walletBalanceQueue() {
+        logger.info("The balance of queue: {}", walletBalanceQueue);
         return new Queue(walletBalanceQueue, true);
     }
 
     // Define exchange
     @Bean
     public TopicExchange walletExchange() {
+        logger.info("Creating exchange: {}", walletExchange);
         return new TopicExchange(walletExchange);
     }
 
     // Bind queues to exchange with respective routing keys
     @Bean
     public Binding bindingCreateQueue() {
+        logger.info("Binding the creation of queue {} to exchange {} with routing key {}", walletCreateQueue, walletExchange, walletCreateRoutingKey);
         return BindingBuilder.bind(walletCreateQueue()).to(walletExchange()).with(walletCreateRoutingKey);
     }
 
     @Bean
     public Binding bindingBalanceQueue() {
+        logger.info("Binding the balance of queue {} to exchange {} with routing key {}", walletCreateQueue, walletExchange, walletBalanceRoutingKey);
         return BindingBuilder.bind(walletBalanceQueue()).to(walletExchange()).with(walletBalanceRoutingKey);
     }
 }

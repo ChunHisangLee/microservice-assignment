@@ -23,6 +23,7 @@
     <!-- Define all sub-modules (microservices) -->
     <modules>
         <module>auth-service</module>
+        <module>outbox-service</module>
         <module>price-service</module>
         <module>user-service</module>
         <module>wallet-service</module>
@@ -135,6 +136,14 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>5.11.0</version>
             <scope>test</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.jack</groupId>
+            <artifactId>common-library</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <!-- Common build configuration for all modules -->

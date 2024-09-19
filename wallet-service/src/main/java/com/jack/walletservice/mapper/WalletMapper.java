@@ -2,31 +2,16 @@ package com.jack.walletservice.mapper;
 
 import com.jack.walletservice.dto.WalletDto;
 import com.jack.walletservice.entity.Wallet;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
-@Component
-public class WalletMapper {
-    public WalletDto toDto(Wallet wallet) {
-        if (wallet == null) {
-            return null;
-        }
-        return WalletDto.builder()
-                .id(wallet.getId())
-                .userId(wallet.getUserId())
-                .usdBalance(wallet.getUsdBalance())
-                .btcBalance(wallet.getBtcBalance())
-                .build();
-    }
+@Mapper
+public interface WalletMapper {
+    WalletMapper INSTANCE = Mappers.getMapper(WalletMapper.class);
 
-    public Wallet toEntity(WalletDto walletDTO) {
-        if (walletDTO == null) {
-            return null;
-        }
-        return Wallet.builder()
-                .id(walletDTO.getId())
-                .userId(walletDTO.getUserId())
-                .usdBalance(walletDTO.getUsdBalance())
-                .btcBalance(walletDTO.getBtcBalance())
-                .build();
-    }
+    // Map entity to DTO
+    WalletDto toDto(Wallet wallet);
+
+    // Map DTO to entity
+    Wallet toEntity(WalletDto walletDTO);
 }

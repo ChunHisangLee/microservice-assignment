@@ -3,14 +3,14 @@ package com.jack.userservice.service.impl;
 import com.jack.common.constants.ErrorCode;
 import com.jack.common.constants.ErrorPath;
 import com.jack.common.dto.request.AuthRequestDto;
+import com.jack.common.dto.request.OutboxRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
 import com.jack.common.dto.response.UserRegistrationDto;
 import com.jack.common.dto.response.UserResponseDto;
 import com.jack.common.dto.response.WalletBalanceDto;
 import com.jack.common.exception.CustomErrorException;
-import com.jack.outboxservice.entity.Outbox;
-import com.jack.outboxservice.repository.OutboxRepository;
 import com.jack.userservice.client.AuthServiceClient;
+import com.jack.userservice.client.OutboxServiceClient;
 import com.jack.userservice.dto.UsersDto;
 import com.jack.userservice.entity.Users;
 import com.jack.userservice.mapper.UsersMapper;
@@ -36,10 +36,10 @@ public class UserServiceImpl implements UserService {
 
     private final UsersRepository usersRepository;
     private final PasswordEncoder passwordEncoder;
-    private final OutboxRepository outboxRepository;
     private final AuthServiceClient authServiceClient;
     private final UsersMapper usersMapper;
     private final RedisTemplate<String, WalletBalanceDto> redisTemplate;
+    private final OutboxServiceClient outboxServiceClient;
 
     @Value("${app.wallet.cache-prefix}")
     private String cachePrefix;
@@ -67,20 +67,25 @@ public class UserServiceImpl implements UserService {
 
         Users savedUser = usersRepository.save(newUser);
 
-        AuthRequestDto authRequest = new AuthRequestDto(savedUser.getEmail(), registrationDTO.getPassword());
+        AuthRequestDto authRequest = AuthRequestDto.builder()
+                .email(savedUser.getEmail())
+                .password(registrationDTO.getPassword())
+                .build();
         AuthResponseDto authResponse = authServiceClient.login(authRequest);
 
+        // Prepare and send the outbox event via the outbox service
         double initialBalance = 1000.00;
-        Outbox outboxEvent = Outbox.builder()
+        OutboxRequestDto outboxEvent = OutboxRequestDto.builder()
                 .aggregateId(savedUser.getId())
                 .aggregateType("User")
                 .payload("{ \"userId\": " + savedUser.getId() + ", \"initialBalance\": " + initialBalance + " }")
                 .routingKey(routingKey)
-                .status(PENDING)
-                .createdAt(LocalDateTime.now())
+                .status(PENDING.name())
+                .createdAt(LocalDateTime.now().toString())
                 .build();
 
-        outboxRepository.save(outboxEvent);
+        logger.info("Sending outbox event for user ID: {}", savedUser.getId());
+        outboxServiceClient.sendOutboxEvent(outboxEvent);
 
         return UserResponseDto.builder()
                 .id(savedUser.getId())

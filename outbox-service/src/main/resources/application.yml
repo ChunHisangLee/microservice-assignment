@@ -1,0 +1,6 @@
+server:
+  port: 8083  # Port for Outbox Service in Docker
+
+spring:
+  profiles:
+    active: local  # Default profile
