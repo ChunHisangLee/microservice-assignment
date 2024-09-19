@@ -22,14 +22,13 @@ public class TokenServiceImpl implements TokenService {
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
     private static final String BLACKLIST_PREFIX = "blacklist:";
+    private SecretKey secretKey;
 
     @Value("${app.jwtSecret}")
     private String jwtSecret;
 
     @Value("${app.jwtExpirationMs}")
     private long jwtExpirationMs;
-
-    private SecretKey secretKey;
 
     public TokenServiceImpl(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -46,15 +45,13 @@ public class TokenServiceImpl implements TokenService {
         if (token != null && !token.trim().isEmpty()) {
             // Check if token is already in the blacklist
             Boolean isTokenBlacklisted = redisTemplate.hasKey(BLACKLIST_PREFIX + token);
+
             if (Boolean.TRUE.equals(isTokenBlacklisted)) {
                 logger.info("Token is already blacklisted: {}", token);
                 return;  // Exit early if token is already blocklisted
             }
 
-            // Get token expiration duration
             long tokenExpiryDuration = getTokenExpiryDuration(token);
-
-            // Save the token in Redis with a TTL (Time-to-Live)
             redisTemplate.opsForValue().set(BLACKLIST_PREFIX + token, token);
             redisTemplate.expire(BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
             logger.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
@@ -82,7 +79,6 @@ public class TokenServiceImpl implements TokenService {
                     .build();
 
             Claims claims = parser.parseSignedClaims(token).getPayload();
-
             Long tokenUserId = Long.parseLong(claims.getSubject());
             return tokenUserId.equals(userId);
         } catch (Exception e) {
@@ -98,12 +94,10 @@ public class TokenServiceImpl implements TokenService {
                     .build();
 
             Claims claims = parser.parseSignedClaims(token).getPayload();
-
             Date expiration = claims.getExpiration();
             long now = System.currentTimeMillis();
-            long timeToExpiry = (expiration.getTime() - now) / 1000;  // Convert milliseconds to seconds
+            long timeToExpiry = (expiration.getTime() - now) / 1000;
 
-            // If the token is already expired or has less than 0 seconds, return 0
             if (timeToExpiry <= 0) {
                 logger.warn("Token has already expired.");
                 return 0;
@@ -112,7 +106,7 @@ public class TokenServiceImpl implements TokenService {
             return timeToExpiry;
         } catch (Exception e) {
             logger.error("Failed to parse JWT token to get expiry duration: {}", e.getMessage());
-            return jwtExpirationMs / 1000;  // Return default expiration time in case of parsing failure
+            return 0;
         }
     }
 }

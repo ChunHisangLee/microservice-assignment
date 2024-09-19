@@ -19,7 +19,7 @@ public class PriceServiceImpl implements PriceService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${initial.price:100}")
+    @Value("${initial.price:100.00}")
     private BigDecimal initialPrice;
 
     public PriceServiceImpl(RedisTemplate<String, String> redisTemplate) {
@@ -29,10 +29,8 @@ public class PriceServiceImpl implements PriceService {
     @Override
     public BigDecimal getPrice() {
         logger.info("Fetching current BTC price from Redis with key: {}", REDIS_KEY);
-
         // Fetch the price from Redis
         String priceStr = redisTemplate.opsForValue().get(REDIS_KEY);
-
         BigDecimal price = null;
 
         if (priceStr != null) {
@@ -47,7 +45,6 @@ public class PriceServiceImpl implements PriceService {
             logger.warn("BTC price not found in Redis. Falling back to initial price: {}", initialPrice);
         }
 
-        // Return the price, falling back to the initial price if necessary
         return price != null ? price : initialPrice;
     }
 

@@ -1,10 +1,10 @@
 package com.jack.authservice.service.impl;
 
 import com.jack.authservice.client.UserServiceClient;
-import com.jack.common.dto.request.AuthRequestDto;
-import com.jack.common.dto.response.AuthResponseDto;
 import com.jack.authservice.security.JwtTokenProvider;
 import com.jack.authservice.service.AuthService;
+import com.jack.common.dto.request.AuthRequestDto;
+import com.jack.common.dto.response.AuthResponseDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,11 +13,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
-
     private final UserServiceClient userServiceClient;  // Inject Feign client
     private final JwtTokenProvider jwtTokenProvider;
-    // Define the token expiration duration (e.g., 1 hour)
-    private static final Long JWT_EXPIRATION_MS = 3600000L;
+    private static final Long JWT_EXPIRATION_MS = 60 * 60 * 1000L;
 
     public AuthServiceImpl(UserServiceClient userServiceClient, JwtTokenProvider jwtTokenProvider) {
         this.userServiceClient = userServiceClient;

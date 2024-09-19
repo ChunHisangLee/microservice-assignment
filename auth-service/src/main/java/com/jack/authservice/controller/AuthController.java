@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-
     private final AuthService authService;
     private final TokenService tokenService;
 
@@ -74,7 +73,7 @@ public class AuthController {
             }
         } else {
             logger.warn("Invalid token format.");
-            return ResponseEntity.badRequest().body(false);  // Bad Request if token format is incorrect
+            return ResponseEntity.badRequest().body(false);  // Bad Request if a token format is incorrect
         }
     }
 }

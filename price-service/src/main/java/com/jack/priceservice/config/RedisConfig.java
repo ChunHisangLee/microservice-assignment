@@ -15,13 +15,12 @@ public class RedisConfig extends RedisCommonConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
 
-    @Bean("redisTemplateObject")  // Give this bean a unique name
+    @Bean("redisTemplateObject")
     public RedisTemplate<String, Object> redisTemplateObject(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
         logger.info("Configured RedisTemplate with StringRedisSerializer for keys and GenericJackson2JsonRedisSerializer for values.");
         return template;
     }

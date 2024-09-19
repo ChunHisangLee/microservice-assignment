@@ -20,9 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
-
     private static final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
-
     private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${security.authentication.enabled:true}")

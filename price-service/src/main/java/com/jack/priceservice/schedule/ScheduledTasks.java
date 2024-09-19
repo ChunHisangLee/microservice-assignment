@@ -61,16 +61,13 @@ public class ScheduledTasks {
         }
 
         log.info("Updated BTC Price: {}", currentPrice);
-
         // Save the updated price to Redis
         priceService.setPrice(BigDecimal.valueOf(currentPrice));
-
         // Save the updated price to the database
         BTCPriceHistory priceHistory = new BTCPriceHistory();
         priceHistory.setPrice(BigDecimal.valueOf(currentPrice));
         priceHistory.setTimestamp(LocalDateTime.now());
         btcPriceHistoryRepository.save(priceHistory);
-
         log.info("Saved updated BTC Price to Redis and database: {}", currentPrice);
     }
 }
