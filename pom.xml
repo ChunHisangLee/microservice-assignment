@@ -23,10 +23,7 @@
     <!-- Define all sub-modules (microservices) -->
     <modules>
         <module>auth-service</module>
-        <module>common-library</module>
-        <module>outbox-service</module>
         <module>price-service</module>
-        <module>transaction-service</module>
         <module>user-service</module>
         <module>wallet-service</module>
     </modules>
@@ -73,7 +70,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <!-- Common dependencies for all modules -->
     <dependencies>
         <!-- Spring Boot Web -->
@@ -141,7 +137,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <!-- Common build configuration for all modules -->
     <build>
         <plugins>

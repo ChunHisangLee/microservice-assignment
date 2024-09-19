@@ -5,14 +5,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Parent reference -->
+    <!-- Parent inherits from Spring Boot's parent POM -->
     <parent>
-        <groupId>com.jack</groupId>
-        <artifactId>microservice-assignment</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath> <!-- Adjust path to parent POM -->
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.3</version>
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
+    <groupId>com.jack</groupId>
     <artifactId>common-library</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging> <!-- Ensures this module is packaged as a JAR -->
@@ -22,12 +23,25 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <!-- Jackson for JSON serialization/deserialization -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- Springdoc OpenAPI for Swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+        <!-- Spring Boot Starter for Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -37,7 +51,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
