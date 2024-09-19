@@ -7,8 +7,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class OutboxDto {
 
     private Long id;

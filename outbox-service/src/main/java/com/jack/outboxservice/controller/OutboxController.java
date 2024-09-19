@@ -11,7 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/outbox")
 public class OutboxController {
-
     private final OutboxService outboxService;
 
     public OutboxController(OutboxService outboxService) {

@@ -35,7 +35,6 @@ public class PriceServiceImpl implements PriceService {
 
         if (priceStr != null) {
             try {
-                // Convert the price string to BigDecimal
                 price = new BigDecimal(priceStr);
                 logger.info("Current BTC price retrieved from Redis: {}", price);
             } catch (NumberFormatException e) {

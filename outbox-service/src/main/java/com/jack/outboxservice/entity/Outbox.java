@@ -11,11 +11,9 @@ import java.time.LocalDateTime;
         @Index(name = "idx_aggregate_type", columnList = "aggregateType"),
         @Index(name = "idx_status", columnList = "status")
 })
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class Outbox {
 
     @Id
