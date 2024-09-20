@@ -4,13 +4,13 @@ openapi:
 
 spring:
   rabbitmq:
-    host: rabbitmq  # RabbitMQ host in Docker environment
+    host: localhost  # RabbitMQ host in Local environment
     port: 5672
     username: guest
     password: guest
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/transactiondb  # Docker database connection
+    url: jdbc:postgresql://localhost:5432/transactiondb  # Local database connection
     username: postgres
     password: Ab123456
     driver-class-name: org.postgresql.Driver
@@ -34,7 +34,6 @@ spring:
 app:
   transaction:
     cache-prefix: "transactionCache:"  # Redis key prefix for transaction data
-    reply-to-queue: transaction-service.response.queue  # Reply queue for responses
     queue:
       create: transaction.create.queue   # Queue for transaction creation messages
       update: transaction.update.queue   # Queue for transaction update messages
@@ -45,12 +44,15 @@ app:
       update: transaction.update         # Routing key for transaction updates
       balance: transaction.balance       # Routing key for transaction balance updates
 
+  redis:
+    btc-price-key: "BTC_CURRENT_PRICE"  # Redis key for storing BTC price
+
 # SpringDoc settings for API documentation
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui-custom.html
+    path: /swagger-ui.html
 
 # Logging pattern
 logging:

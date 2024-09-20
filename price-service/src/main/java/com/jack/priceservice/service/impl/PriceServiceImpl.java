@@ -13,11 +13,11 @@ import java.time.Duration;
 
 @Service
 public class PriceServiceImpl implements PriceService {
-
     private static final Logger logger = LoggerFactory.getLogger(PriceServiceImpl.class);
-    public static final String REDIS_KEY = "BTC_CURRENT_PRICE";
-
     private final RedisTemplate<String, String> redisTemplate;
+
+    @Value("${app.redis.btc-price-key}")
+    private String btcPriceKey;
 
     @Value("${initial.price:100.00}")
     private BigDecimal initialPrice;
@@ -28,9 +28,9 @@ public class PriceServiceImpl implements PriceService {
 
     @Override
     public BigDecimal getPrice() {
-        logger.info("Fetching current BTC price from Redis with key: {}", REDIS_KEY);
+        logger.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);
         // Fetch the price from Redis
-        String priceStr = redisTemplate.opsForValue().get(REDIS_KEY);
+        String priceStr = redisTemplate.opsForValue().get(btcPriceKey);
         BigDecimal price = null;
 
         if (priceStr != null) {
@@ -49,8 +49,8 @@ public class PriceServiceImpl implements PriceService {
 
     @Override
     public void setPrice(BigDecimal price) {
-        logger.info("Setting current BTC price in Redis with key: {} to value: {}", REDIS_KEY, price);
-        redisTemplate.opsForValue().set(REDIS_KEY, String.valueOf(price), Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
+        logger.info("Setting current BTC price in Redis with key: {} to value: {}", btcPriceKey, price);
+        redisTemplate.opsForValue().set(btcPriceKey, String.valueOf(price), Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
         logger.info("BTC price set successfully in Redis.");
     }
 }

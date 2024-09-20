@@ -38,3 +38,8 @@ springdoc:
 
 initial:
   price: 100.00
+
+# Custom application-specific properties
+app:
+  redis:
+    btc-price-key: "BTC_CURRENT_PRICE"  # Redis key for storing BTC price

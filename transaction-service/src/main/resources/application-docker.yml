@@ -45,12 +45,15 @@ app:
       update: transaction.update         # Routing key for transaction updates
       balance: transaction.balance       # Routing key for transaction balance updates
 
+  redis:
+    btc-price-key: "BTC_CURRENT_PRICE"  # Redis key for storing BTC price
+
 # SpringDoc settings for API documentation
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui-custom.html
+    path: /swagger-ui.html
 
 # Logging pattern
 logging:
