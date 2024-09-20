@@ -1,0 +1,6 @@
+server:
+  port: 8085  # Port for Transaction Service in Docker
+
+spring:
+  profiles:
+    active: local  # Default profile

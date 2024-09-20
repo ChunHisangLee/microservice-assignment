@@ -10,6 +10,9 @@ public class SecurityConstants {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
 
+    public static final int DEFAULT_PAGE_NUMBER = 0;
+    public static final int DEFAULT_PAGE_SIZE = 20;
+
     // Enum for public URLs
     public enum PublicUrls {
         API_AUTH("/api/auth/**"),

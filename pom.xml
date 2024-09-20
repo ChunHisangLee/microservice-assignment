@@ -22,11 +22,12 @@
 
     <!-- Define all sub-modules (microservices) -->
     <modules>
-        <module>auth-service</module>
-        <module>outbox-service</module>
-        <module>price-service</module>
-        <module>user-service</module>
-        <module>wallet-service</module>
+        <module>auth-service</module>           <!-- Port:8084 -->
+        <module>outbox-service</module>         <!-- Port:8083 -->
+        <module>price-service</module>          <!-- Port:8080 -->
+        <module>user-service</module>           <!-- Port:8081 -->
+        <module>transaction-service</module>    <!-- Port:8085 -->
+        <module>wallet-service</module>         <!-- Port:8082 -->
     </modules>
 
     <!-- Define common properties -->
@@ -137,7 +138,6 @@
             <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
-
 
         <dependency>
             <groupId>com.jack</groupId>

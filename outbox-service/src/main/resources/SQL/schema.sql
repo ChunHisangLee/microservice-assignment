@@ -5,7 +5,7 @@ CREATE DATABASE outboxdb;
 -- Drop outbox's table if it exists
 DROP TABLE IF EXISTS outbox CASCADE;
 
--- Create users' table
+-- Create outbox's table
 CREATE TABLE outbox
 (
     id           SERIAL PRIMARY KEY,

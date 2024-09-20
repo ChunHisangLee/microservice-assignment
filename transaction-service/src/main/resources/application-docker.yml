@@ -1,0 +1,61 @@
+openapi:
+  title: "Transaction Service API"
+  version: "v1"
+
+spring:
+  rabbitmq:
+    host: rabbitmq  # RabbitMQ host in Docker environment
+    port: 5672
+    username: guest
+    password: guest
+
+  datasource:
+    url: jdbc:postgresql://db:5432/transactiondb  # Docker database connection
+    username: postgres
+    password: Ab123456
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      auto-commit: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false  # Disable open-in-view for better performance
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: Ab123456
+      timeout: 60000ms  # 60 seconds, specified in milliseconds
+
+# Custom application-specific settings
+app:
+  transaction:
+    cache-prefix: "transactionCache:"  # Redis key prefix for transaction data
+    reply-to-queue: transaction-service.response.queue  # Reply queue for responses
+    queue:
+      create: transaction.create.queue   # Queue for transaction creation messages
+      update: transaction.update.queue   # Queue for transaction update messages
+      balance: transaction.balance.queue # Queue for transaction balance updates
+    exchange: transaction-exchange       # Exchange for transaction messages
+    routing-key:
+      create: transaction.creation       # Routing key for transaction creation
+      update: transaction.update         # Routing key for transaction updates
+      balance: transaction.balance       # Routing key for transaction balance updates
+
+# SpringDoc settings for API documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui-custom.html
+
+# Logging pattern
+logging:
+  level:
+    com.jack.transactionservice: INFO
+
+  pattern:
+    console: "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}"
