@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -33,7 +34,11 @@ public class Transaction {
 
     @Min(value = 0, message = "BTC amount must be greater than or equal to 0")
     @Column(nullable = false)
-    private double btcAmount;
+    private BigDecimal btcAmount;
+
+    @Min(value = 0, message = "USD amount must be greater than or equal to 0")
+    @Column(nullable = false)
+    private BigDecimal usdAmount;
 
     @PastOrPresent(message = "Transaction time must be in the past or present")
     @Column(nullable = false, updatable = false)

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "wallet", indexes = {
         @Index(name = "idx_user_id", columnList = "user_id")
@@ -27,9 +29,9 @@ public class Wallet {
 
     @Min(value = 0, message = "USD balance must be non-negative")
     @Column(nullable = false)
-    private double usdBalance;
+    private BigDecimal usdBalance;
 
     @Min(value = 0, message = "BTC balance must be non-negative")
     @Column(nullable = false)
-    private double btcBalance;
+    private BigDecimal btcBalance;
 }

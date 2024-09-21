@@ -7,6 +7,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 
+import java.math.BigDecimal;
+
 @Mapper(componentModel = "spring")
 public interface TransactionMapper {
 
@@ -24,7 +26,7 @@ public interface TransactionMapper {
             @Mapping(source = "usdBalanceAfter", target = "usdBalanceAfter"),
             @Mapping(source = "btcBalanceAfter", target = "btcBalanceAfter")
     })
-    TransactionDto toDto(Transaction transaction, double usdBalanceBefore, double btcBalanceBefore, double usdBalanceAfter, double btcBalanceAfter);
+    TransactionDto toDto(Transaction transaction, BigDecimal usdBalanceBefore, BigDecimal btcBalanceBefore, BigDecimal usdBalanceAfter, BigDecimal btcBalanceAfter);
 
     @Mappings({
             @Mapping(source = "transactionDto.id", target = "id"),

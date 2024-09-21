@@ -9,7 +9,6 @@ DROP TABLE IF EXISTS outbox CASCADE;
 CREATE TABLE outbox
 (
     id           SERIAL PRIMARY KEY,
-    user_id      BIGINT,
     event_type   VARCHAR(255),
     payload      TEXT,
     routing_key  VARCHAR(255),

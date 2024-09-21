@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
 @RestController
 @RequestMapping("/api/outbox")
 public class OutboxController {
@@ -17,18 +16,32 @@ public class OutboxController {
         this.outboxService = outboxService;
     }
 
-    // Endpoint to save a new outbox entry
+    // Endpoint to handle transaction event requests from transaction-service
+    @PostMapping("/sendTransactionEvent")
+    public ResponseEntity<Void> sendTransactionEvent(
+            @RequestParam("transactionId") Long transactionId,
+            @RequestParam("userId") Long userId,
+            @RequestParam("btcAmount") double btcAmount) {
+        try {
+            // Here you can handle the logic to create an outbox event from the transaction details
+            outboxService.processTransactionEvent(transactionId, userId, btcAmount);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing transaction event");
+        }
+    }
+
+    // Existing endpoints
     @PostMapping
     public ResponseEntity<OutboxDto> createOutbox(@Valid @RequestBody OutboxDto outboxDTO) {
         OutboxDto savedOutbox = outboxService.saveOutbox(outboxDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedOutbox); // Use CREATED (201) status for new resource
     }
 
-    // Endpoint to fetch an outbox entry by id
     @GetMapping("/{id}")
     public ResponseEntity<OutboxDto> getOutboxById(@PathVariable Long id) {
         OutboxDto outbox = outboxService.getOutboxById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Outbox entry not found")); // Handle not found case
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Outbox entry not found"));
         return ResponseEntity.ok(outbox);
     }
 }

@@ -18,6 +18,7 @@ public class AuthController {
     private final AuthService authService;
     private final TokenService tokenService;
 
+
     public AuthController(AuthService authService, TokenService tokenService) {
         this.authService = authService;
         this.tokenService = tokenService;
@@ -55,7 +56,7 @@ public class AuthController {
             @RequestParam Long userId) {
 
         if (token != null && token.startsWith(SecurityConstants.BEARER_PREFIX)) {
-            token = token.substring(7);  // Remove "Bearer " prefix
+            token = token.substring(SecurityConstants.PREFIX_INDEX);  // Remove "Bearer " prefix
 
             try {
                 boolean isValid = tokenService.validateToken(token, userId);
@@ -69,7 +70,7 @@ public class AuthController {
                 }
             } catch (Exception e) {
                 logger.error("Error validating token: {}", e.getMessage());
-                return ResponseEntity.status(500).body(false);  // Internal server error in case of an exception
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);  // Internal server error in case of an exception
             }
         } else {
             logger.warn("Invalid token format.");

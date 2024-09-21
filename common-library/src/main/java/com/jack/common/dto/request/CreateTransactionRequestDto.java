@@ -4,17 +4,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @Builder
 public class CreateTransactionRequestDto {
     private Long userId;
-    private double btcAmount;
+    private BigDecimal btcAmount;
+    private BigDecimal usdAmount;
+    // Wallet balances before the transaction
+    private BigDecimal usdBalanceBefore;
+    private BigDecimal btcBalanceBefore;
 
-    private double usdBalanceBefore;
-    private double btcBalanceBefore;
-
-    private double usdBalanceAfter;
-    private double btcBalanceAfter;
-
+    // Wallet balances after the transaction
+    private BigDecimal usdBalanceAfter;
+    private BigDecimal btcBalanceAfter;
 }

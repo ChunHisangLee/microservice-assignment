@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -15,12 +16,13 @@ public class TransactionDto {
     private Long userId;
     private Long btcPriceHistoryId;
 
-    private double btcAmount;
+    private BigDecimal btcAmount;
+    private BigDecimal usdAmount;
     private LocalDateTime transactionTime;
     private TransactionType transactionType;
 
-    private double usdBalanceBefore;
-    private double btcBalanceBefore;
-    private double usdBalanceAfter;
-    private double btcBalanceAfter;
+    private BigDecimal usdBalanceBefore;
+    private BigDecimal btcBalanceBefore;
+    private BigDecimal usdBalanceAfter;
+    private BigDecimal btcBalanceAfter;
 }

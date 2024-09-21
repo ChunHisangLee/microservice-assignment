@@ -2,6 +2,8 @@ package com.jack.walletservice.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @Builder
@@ -10,6 +12,6 @@ import lombok.*;
 public class WalletDto {
     private Long id;
     private Long userId;
-    private double usdBalance;
-    private double btcBalance;
+    private BigDecimal usdBalance;
+    private BigDecimal btcBalance;
 }

@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "outbox-service", url = "${OUTBOX_SERVICE_URL:https://auth-service:8083}")
 public interface OutboxServiceClient {
 
-    @PostMapping("/api/v1/outbox")
+    @PostMapping("/api/outbox")
     void sendOutboxEvent(@RequestBody OutboxRequestDto outboxRequestDto);
 }

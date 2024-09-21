@@ -1,5 +1,6 @@
 package com.jack.outboxservice.dto;
 
+import com.jack.common.constants.EventStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -8,12 +9,14 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class OutboxDto {
-
     private Long id;
-    private Long aggregateId;
-    private String aggregateType;
+
+    private String eventType;
     private String payload;
+    private String routingKey;
+
     private LocalDateTime createdAt;
-    private boolean processed;
     private LocalDateTime processedAt;
+
+    private EventStatus status;
 }
