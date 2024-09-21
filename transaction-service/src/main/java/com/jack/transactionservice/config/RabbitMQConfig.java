@@ -1,12 +1,12 @@
 package com.jack.transactionservice.config;
 
+import com.jack.common.constants.TransactionConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,73 +15,67 @@ public class RabbitMQConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(RabbitMQConfig.class);
 
-    @Value("${app.transaction.queue.create}")
-    private String transactionCreateQueue;
-
-    @Value("${app.transaction.queue.update}")
-    private String transactionUpdateQueue;
-
-    @Value("${app.transaction.queue.balance}")
-    private String transactionBalanceQueue;
-
-    @Value("${app.transaction.exchange}")
-    private String transactionExchange;
-
-    @Value("${app.transaction.routing-key.create}")
-    private String transactionCreateRoutingKey;
-
-    @Value("${app.transaction.routing-key.update}")
-    private String transactionUpdateRoutingKey;
-
-    @Value("${app.transaction.routing-key.balance}")
-    private String transactionBalanceRoutingKey;
-
     // Define the create queue
     @Bean
     public Queue transactionCreateQueue() {
-        logger.info("Creating CreateQueue: {}", transactionCreateQueue);
-        return new Queue(transactionCreateQueue, true); // Durable queue for persistence
+        logger.info("Creating CreateQueue: {}", TransactionConstants.TRANSACTION_CREATE_QUEUE);
+        return new Queue(TransactionConstants.TRANSACTION_CREATE_QUEUE, true); // Durable queue for persistence
     }
 
     // Define the update queue
     @Bean
     public Queue transactionUpdateQueue() {
-        logger.info("Creating UpdateQueue: {}", transactionUpdateQueue);
-        return new Queue(transactionUpdateQueue, true);
+        logger.info("Creating UpdateQueue: {}", TransactionConstants.TRANSACTION_UPDATE_QUEUE);
+        return new Queue(TransactionConstants.TRANSACTION_UPDATE_QUEUE, true);
     }
 
     // Define the balance queue
     @Bean
     public Queue transactionBalanceQueue() {
-        logger.info("Creating BalanceQueue: {}", transactionBalanceQueue);
-        return new Queue(transactionBalanceQueue, true);
+        logger.info("Creating BalanceQueue: {}", TransactionConstants.TRANSACTION_BALANCE_QUEUE);
+        return new Queue(TransactionConstants.TRANSACTION_BALANCE_QUEUE, true);
     }
 
     // Define the exchange
     @Bean
     public TopicExchange transactionExchange() {
-        logger.info("Creating exchange: {}", transactionExchange);
-        return new TopicExchange(transactionExchange);
+        logger.info("Creating exchange: {}", TransactionConstants.TRANSACTION_EXCHANGE);
+        return new TopicExchange(TransactionConstants.TRANSACTION_EXCHANGE);
     }
 
     // Bind the create queue to the exchange with the routing key
     @Bean
     public Binding bindingCreateQueue() {
-        logger.info("Binding CreateQueue {} to exchange {} with routing key {}", transactionCreateQueue, transactionExchange, transactionCreateRoutingKey);
-        return BindingBuilder.bind(transactionCreateQueue()).to(transactionExchange()).with(transactionCreateRoutingKey);
+        logger.info("Binding CreateQueue {} to exchange {} with routing key {}",
+                TransactionConstants.TRANSACTION_CREATE_QUEUE,
+                TransactionConstants.TRANSACTION_EXCHANGE,
+                TransactionConstants.TRANSACTION_CREATE_ROUTING_KEY);
+        return BindingBuilder.bind(transactionCreateQueue())
+                .to(transactionExchange())
+                .with(TransactionConstants.TRANSACTION_CREATE_ROUTING_KEY);
     }
 
     // Bind the update queue to the exchange with the routing key
     @Bean
     public Binding bindingUpdateQueue() {
-        logger.info("Binding UpdateQueue {} to exchange {} with routing key {}", transactionUpdateQueue, transactionExchange, transactionUpdateRoutingKey);
-        return BindingBuilder.bind(transactionUpdateQueue()).to(transactionExchange()).with(transactionUpdateRoutingKey);
+        logger.info("Binding UpdateQueue {} to exchange {} with routing key {}",
+                TransactionConstants.TRANSACTION_UPDATE_QUEUE,
+                TransactionConstants.TRANSACTION_EXCHANGE,
+                TransactionConstants.TRANSACTION_UPDATE_ROUTING_KEY);
+        return BindingBuilder.bind(transactionUpdateQueue())
+                .to(transactionExchange())
+                .with(TransactionConstants.TRANSACTION_UPDATE_ROUTING_KEY);
     }
 
     // Bind the balance queue to the exchange with the routing key
     @Bean
     public Binding bindingBalanceQueue() {
-        logger.info("Binding BalanceQueue {} to exchange {} with routing key {}", transactionBalanceQueue, transactionExchange, transactionBalanceRoutingKey);
-        return BindingBuilder.bind(transactionBalanceQueue()).to(transactionExchange()).with(transactionBalanceRoutingKey);
+        logger.info("Binding BalanceQueue {} to exchange {} with routing key {}",
+                TransactionConstants.TRANSACTION_BALANCE_QUEUE,
+                TransactionConstants.TRANSACTION_EXCHANGE,
+                TransactionConstants.TRANSACTION_BALANCE_ROUTING_KEY);
+        return BindingBuilder.bind(transactionBalanceQueue())
+                .to(transactionExchange())
+                .with(TransactionConstants.TRANSACTION_BALANCE_ROUTING_KEY);
     }
 }

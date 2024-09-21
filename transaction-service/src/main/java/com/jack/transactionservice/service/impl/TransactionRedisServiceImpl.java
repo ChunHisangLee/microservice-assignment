@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.service.TransactionRedisService;
+import com.jack.common.constants.TransactionConstants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +17,16 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-
 public class TransactionRedisServiceImpl implements TransactionRedisService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionRedisServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${app.transaction.cache-prefix}")
+    // Use constant with fallback to config property
+    @Value("${app.transaction.cache-prefix:" + TransactionConstants.TRANSACTION_CACHE_PREFIX + "}")
     private String cachePrefix;
 
-    @Value("${app.transaction.cache-ttl:10}")
+    @Value("${app.transaction.cache-ttl:" + TransactionConstants.TRANSACTION_CACHE_TTL + "}")
     private long cacheTTL;
 
     @Override
@@ -56,7 +57,6 @@ public class TransactionRedisServiceImpl implements TransactionRedisService {
         String redisKey = cachePrefix + transactionId;
         redisTemplate.delete(redisKey);
         logger.info("Transaction with ID {} has been removed from Redis for key: {}", transactionId, redisKey);
-
     }
 
     private TransactionDto deserializeTransaction(String transactionJson) {

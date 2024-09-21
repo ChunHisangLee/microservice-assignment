@@ -1,6 +1,8 @@
 package com.jack.transactionservice.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jack.common.constants.ApplicationConstants;
+import com.jack.common.constants.TransactionConstants;
 import com.jack.common.dto.request.CreateTransactionRequestDto;
 import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.transactionservice.client.OutboxClient;
@@ -12,7 +14,6 @@ import com.jack.transactionservice.mapper.TransactionMapper;
 import com.jack.transactionservice.repository.TransactionRepository;
 import com.jack.transactionservice.service.TransactionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,11 +35,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${app.transaction.cache-prefix}")
-    private String cachePrefix;
-
-    @Value("${app.redis.btc-price-key}")
-    private String btcPriceKey;
+    private final String btcPriceKey = ApplicationConstants.BTC_PRICE_KEY;
 
     @Override
     public TransactionDto createTransaction(CreateTransactionRequestDto request, TransactionType transactionType) {
@@ -80,11 +77,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void cacheTransaction(Transaction transaction) {
-        String redisKey = cachePrefix + transaction.getId();
+        String redisKey = TransactionConstants.TRANSACTION_CACHE_PREFIX + transaction.getId();
         try {
             // Serialize a transaction object to JSON for caching
             String transactionJson = objectMapper.writeValueAsString(transaction);
-            redisTemplate.opsForValue().set(redisKey, transactionJson, 10, TimeUnit.MINUTES);  // Cache for 10 minutes
+            redisTemplate.opsForValue().set(redisKey, transactionJson, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);  // Use constant TTL
         } catch (Exception e) {
             throw new IllegalStateException("Failed to serialize Transaction to cache: " + e.getMessage(), e);
         }

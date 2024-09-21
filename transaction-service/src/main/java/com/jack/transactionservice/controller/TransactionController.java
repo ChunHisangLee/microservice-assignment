@@ -4,6 +4,7 @@ package com.jack.transactionservice.controller;
 import com.jack.common.dto.request.CreateTransactionRequestDto;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.entity.TransactionType;
+import com.jack.transactionservice.service.TransactionRedisService;
 import com.jack.transactionservice.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,19 +14,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import static com.jack.common.constants.SecurityConstants.DEFAULT_PAGE_NUMBER;
-import static com.jack.common.constants.SecurityConstants.DEFAULT_PAGE_SIZE;
+import static com.jack.common.constants.ApplicationConstants.DEFAULT_PAGE_NUMBER;
+import static com.jack.common.constants.ApplicationConstants.DEFAULT_PAGE_SIZE;
 
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
-
     private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
-
     private final TransactionService transactionService;
+    private final TransactionRedisService transactionRedisService;
 
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(TransactionService transactionService, TransactionRedisService transactionRedisService) {
         this.transactionService = transactionService;
+        this.transactionRedisService = transactionRedisService;
     }
 
     @PostMapping("/buy")
@@ -55,5 +56,27 @@ public class TransactionController {
         Page<TransactionDto> transactions = transactionService.getUserTransactionHistory(userId, pageable);
         logger.info("Fetched {} transactions for user ID: {}", transactions.getTotalElements(), userId);
         return ResponseEntity.ok(transactions);
+    }
+
+    @PostMapping("/cache")
+    public ResponseEntity<String> cacheTransaction(@RequestBody TransactionDto transactionDto) {
+        transactionRedisService.saveTransactionToRedis(transactionDto);
+        return ResponseEntity.ok("Transaction cached successfully.");
+    }
+
+    @GetMapping("/cache/{transactionId}")
+    public ResponseEntity<TransactionDto> getCachedTransaction(@PathVariable Long transactionId) {
+        TransactionDto cachedTransaction = transactionRedisService.getTransactionFromRedis(transactionId);
+        if (cachedTransaction != null) {
+            return ResponseEntity.ok(cachedTransaction);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/cache/{transactionId}")
+    public ResponseEntity<String> deleteCachedTransaction(@PathVariable Long transactionId) {
+        transactionRedisService.deleteTransactionFromRedis(transactionId);
+        return ResponseEntity.ok("Transaction deleted from Redis.");
     }
 }
