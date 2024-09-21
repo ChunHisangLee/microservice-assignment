@@ -3,11 +3,8 @@ package com.jack.walletservice.service.impl;
 import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.common.dto.response.WalletResponseDto;
-import com.jack.walletservice.dto.WalletDto;
 import com.jack.walletservice.entity.Wallet;
-import com.jack.walletservice.exception.InsufficientFundsException;
 import com.jack.walletservice.exception.WalletNotFoundException;
-import com.jack.walletservice.mapper.WalletMapper;
 import com.jack.walletservice.publisher.WalletBalancePublisher;
 import com.jack.walletservice.repository.WalletRepository;
 import com.jack.walletservice.service.WalletService;
@@ -22,7 +19,6 @@ import java.math.BigDecimal;
 @Service
 public class WalletServiceImpl implements WalletService {
     private static final Logger logger = LoggerFactory.getLogger(WalletServiceImpl.class);
-    private final WalletMapper walletMapper = WalletMapper.INSTANCE;
     private final WalletRepository walletRepository;
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
     private final WalletBalancePublisher walletBalancePublisher;
@@ -51,21 +47,9 @@ public class WalletServiceImpl implements WalletService {
         logger.info("Wallet created successfully for user ID: {}", message.getUserId());
     }
 
-
-    @Transactional(readOnly = true)
-    @Override
-    public WalletDto getWalletByUserId(Long userId) {
-        // Fetch wallet entity from the database
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user ID: " + userId));
-
-        // Use mapper to convert Wallet entity to WalletDto
-        return walletMapper.toDto(wallet);
-    }
-
     @Transactional
     @Override
-    public WalletDto updateWallet(Long userId, BigDecimal usdAmount, BigDecimal btcAmount) {
+    public void updateWallet(Long userId, BigDecimal usdAmount, BigDecimal btcAmount) {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user ID: " + userId));
 
@@ -82,28 +66,6 @@ public class WalletServiceImpl implements WalletService {
         updateCacheAndNotify(wallet);
 
         logger.info("Wallet updated and balance published for user ID: {}", userId);
-
-        // Convert the updated Wallet entity to WalletDto and return it
-        return walletMapper.toDto(wallet);
-    }
-
-    @Transactional
-    @Override
-    public void debitWallet(Long userId, BigDecimal amount) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user ID: " + userId));
-
-        logger.info("Debiting {} USD from wallet of user ID: {}", amount, userId);
-
-        if (wallet.getUsdBalance().compareTo(amount) < 0) {
-            logger.error("Insufficient balance. Attempted to debit {} USD from user ID: {}", amount, userId);
-            throw new InsufficientFundsException("Insufficient USD balance.");
-        }
-
-        wallet.setUsdBalance(wallet.getUsdBalance().subtract(amount));
-        walletRepository.save(wallet);
-        updateCacheAndNotify(wallet);
-        logger.info("Wallet debited and balance published for user ID: {}", userId);
     }
 
     @Transactional
@@ -125,18 +87,6 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public boolean walletExists(Long userId) {
         return walletRepository.findByUserId(userId).isPresent();
-    }
-
-    @Transactional
-    @Override
-    public void updateWalletBalance(WalletResponseDto walletResponseDto) {
-        Wallet wallet = walletRepository.findByUserId(walletResponseDto.getUserId())
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user ID: " + walletResponseDto.getUserId()));
-        wallet.setUsdBalance(walletResponseDto.getUsdBalance());
-        wallet.setBtcBalance(walletResponseDto.getBtcBalance());
-        walletRepository.save(wallet);
-        updateCacheAndNotify(wallet);
-        logger.info("Wallet and cache updated, balance published for user ID: {}", walletResponseDto.getUserId());
     }
 
     private WalletResponseDto updateCacheAndNotify(Wallet wallet) {

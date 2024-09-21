@@ -15,7 +15,8 @@ public enum ErrorPath {
     GET_LOGOUT_API(10006, "GET /api/users/logout", HttpStatus.UNAUTHORIZED),
     POST_REGISTER_API(10007, "POST /api/users/register", HttpStatus.BAD_REQUEST),
     POST_VERIFY_PASSWORD_API(10008, "POST /api/users/verify-password", HttpStatus.BAD_REQUEST),
-    POST_LOGOUT_API(10009, "POST /api/users/logout", HttpStatus.INTERNAL_SERVER_ERROR);
+    POST_LOGOUT_API(10009, "POST /api/users/logout", HttpStatus.INTERNAL_SERVER_ERROR),
+    GET_WALLET_BALANCE_API(10010, "GET /api/users//{userId}/balance", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String path;

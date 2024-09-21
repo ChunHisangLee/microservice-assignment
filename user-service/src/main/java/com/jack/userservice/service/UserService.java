@@ -1,6 +1,6 @@
 package com.jack.userservice.service;
 
-import com.jack.common.dto.response.UserRegistrationResponseDto;
+import com.jack.common.dto.request.UserRegistrationRequestDto;
 import com.jack.common.dto.response.UserResponseDto;
 import com.jack.userservice.dto.UsersDto;
 import com.jack.userservice.entity.Users;
@@ -8,17 +8,11 @@ import com.jack.userservice.entity.Users;
 import java.util.Optional;
 
 public interface UserService {
-    UserResponseDto register(UserRegistrationResponseDto registrationDTO);
+    UserResponseDto register(UserRegistrationRequestDto userRegistrationRequestDto);
 
     Optional<Users> updateUser(Long id, Users users);
 
     void deleteUser(Long id);
-
-    Users login(String email, String password);
-
-    Optional<Users> getUserById(Long id);
-
-    Optional<Users> findByEmail(String email);
 
     boolean verifyPassword(String email, String rawPassword);
 

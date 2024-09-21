@@ -5,7 +5,7 @@ import com.jack.common.dto.response.WalletBalanceMessageDto;
 import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.WalletNotFoundException;
-import com.jack.walletservice.service.WalletService;
+import com.jack.walletservice.repository.WalletRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
@@ -18,11 +18,11 @@ import org.springframework.stereotype.Component;
 public class WalletBalanceListener {
 
     private static final Logger logger = LoggerFactory.getLogger(WalletBalanceListener.class);
-    private final WalletService walletService;
+    private final WalletRepository walletRepository;
     private final RabbitTemplate rabbitTemplate;
 
-    public WalletBalanceListener(WalletService walletService, RabbitTemplate rabbitTemplate) {
-        this.walletService = walletService;
+    public WalletBalanceListener(WalletRepository walletRepository, RabbitTemplate rabbitTemplate) {
+        this.walletRepository = walletRepository;
         this.rabbitTemplate = rabbitTemplate;
     }
 
@@ -49,7 +49,8 @@ public class WalletBalanceListener {
         }
 
         try {
-            Wallet wallet = walletService.getWalletByUserId(userId);
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user ID: " + userId));
 
             WalletResponseDto responseDTO = WalletResponseDto.builder()
                     .userId(wallet.getUserId())

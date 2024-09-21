@@ -4,11 +4,13 @@ import com.jack.common.constants.ErrorCode;
 import com.jack.common.constants.ErrorPath;
 import com.jack.common.constants.SecurityConstants;
 import com.jack.common.dto.request.AuthRequestDto;
+import com.jack.common.dto.request.UserRegistrationRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import com.jack.common.dto.response.UserRegistrationResponseDto;
 import com.jack.common.dto.response.UserResponseDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
+import com.jack.userservice.dto.UsersDto;
+import com.jack.userservice.entity.Users;
 import com.jack.userservice.service.UserService;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,8 +37,8 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserRegistrationResponseDto userRegistrationResponseDTO) {
-        UserResponseDto userResponse = userService.register(userRegistrationResponseDTO);
+    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserRegistrationRequestDto userRegistrationRequestDto) {
+        UserResponseDto userResponse = userService.register(userRegistrationRequestDto);
         return ResponseEntity.ok(userResponse);
     }
 
@@ -100,5 +104,27 @@ public class UserController {
                             ErrorPath.GET_LOGOUT_API.getPath()
                     ));
         }
+    }
+
+    // Get user with balance
+    @GetMapping("/{userId}/balance")
+    public ResponseEntity<UsersDto> getUserWithBalance(@PathVariable Long userId) {
+        UsersDto userWithBalance = userService.getUserWithBalance(userId);
+        return ResponseEntity.ok(userWithBalance);
+    }
+
+    // Update user
+    @PutMapping("/{id}")
+    public ResponseEntity<Users> updateUser(@PathVariable Long id, @RequestBody Users users) {
+        Optional<Users> updatedUser = userService.updateUser(id, users);
+        return updatedUser.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Delete user
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

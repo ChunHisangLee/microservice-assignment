@@ -1,6 +1,6 @@
 package com.jack.walletservice.controller;
 
-import com.jack.walletservice.dto.WalletDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.walletservice.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +15,19 @@ public class WalletController {
 
     private final WalletService walletService;
 
+    // Update wallet balances
     @PutMapping("/{userId}")
-    public ResponseEntity<WalletDto> updateWallet(@PathVariable Long userId,
-                                                  @RequestParam("usdBalance") double usdBalance,
-                                                  @RequestParam("btcBalance") double btcBalance) {
-        WalletDto updatedWallet = walletService.updateWallet(userId, BigDecimal.valueOf(usdBalance), BigDecimal.valueOf(btcBalance));
-        return ResponseEntity.ok(updatedWallet);
+    public ResponseEntity<Void> updateWallet(@PathVariable Long userId,
+                                             @RequestParam("usdBalance") BigDecimal usdBalance,
+                                             @RequestParam("btcBalance") BigDecimal btcBalance) {
+        walletService.updateWallet(userId, usdBalance, btcBalance);
+        return ResponseEntity.ok().build();
+    }
+
+    // Get wallet balance by userId
+    @GetMapping("/{userId}")
+    public ResponseEntity<WalletResponseDto> getWalletBalance(@PathVariable Long userId) {
+        WalletResponseDto walletResponseDto = walletService.getWalletBalance(userId);
+        return ResponseEntity.ok(walletResponseDto);
     }
 }

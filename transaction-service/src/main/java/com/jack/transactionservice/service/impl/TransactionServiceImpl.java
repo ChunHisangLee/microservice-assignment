@@ -61,7 +61,7 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal newBtcBalance = calculateNewBtcBalance(request.getBtcBalanceBefore(), transaction.getBtcAmount(), transactionType);
 
         // Step 5: Call the WalletService to update the user's wallet balances
-        walletServiceClient.updateWalletBalance(request.getUserId(), newUsdBalance.doubleValue(), newBtcBalance.doubleValue());
+        walletServiceClient.updateWalletBalance(request.getUserId(), newUsdBalance, newBtcBalance);
 
         // Step 6: Cache the transaction data in Redis
         cacheTransaction(transaction);

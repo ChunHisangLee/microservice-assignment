@@ -2,15 +2,17 @@ package com.jack.userservice.service.impl;
 
 import com.jack.common.constants.ErrorCode;
 import com.jack.common.constants.ErrorPath;
+import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.request.OutboxRequestDto;
+import com.jack.common.dto.request.UserRegistrationRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import com.jack.common.dto.response.UserRegistrationResponseDto;
 import com.jack.common.dto.response.UserResponseDto;
 import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.client.OutboxServiceClient;
+import com.jack.userservice.client.WalletServiceClient;
 import com.jack.userservice.dto.UsersDto;
 import com.jack.userservice.entity.Users;
 import com.jack.userservice.mapper.UsersMapper;
@@ -19,12 +21,10 @@ import com.jack.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -34,24 +34,18 @@ import static com.jack.common.constants.EventStatus.PENDING;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
-
     private final UsersRepository usersRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthServiceClient authServiceClient;
     private final UsersMapper usersMapper;
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
     private final OutboxServiceClient outboxServiceClient;
-
-    @Value("${app.wallet.cache-prefix}")
-    private String cachePrefix;
-
-    @Value("${app.wallet.routing-key.create}")
-    private String routingKey;
+    private final WalletServiceClient walletServiceClient;
 
     @Override
-    public UserResponseDto register(UserRegistrationResponseDto registrationDTO) {
-        if (usersRepository.findByEmail(registrationDTO.getEmail()).isPresent()) {
-            logger.error("User registration failed. User with email '{}' already exists", registrationDTO.getEmail());
+    public UserResponseDto register(UserRegistrationRequestDto registrationDto) {
+        if (usersRepository.findByEmail(registrationDto.getEmail()).isPresent()) {
+            logger.error("User registration failed. User with email '{}' already exists", registrationDto.getEmail());
             throw new CustomErrorException(
                     ErrorCode.MAIL_ALREADY_EXISTS.getHttpStatus(),
                     ErrorCode.MAIL_ALREADY_EXISTS.getMessage(),
@@ -59,10 +53,10 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        String encodedPassword = passwordEncoder.encode(registrationDTO.getPassword());
+        String encodedPassword = passwordEncoder.encode(registrationDto.getPassword());
         Users newUser = Users.builder()
-                .name(registrationDTO.getName())
-                .email(registrationDTO.getEmail())
+                .name(registrationDto.getName())
+                .email(registrationDto.getEmail())
                 .password(encodedPassword)
                 .build();
 
@@ -70,7 +64,7 @@ public class UserServiceImpl implements UserService {
 
         AuthRequestDto authRequest = AuthRequestDto.builder()
                 .email(savedUser.getEmail())
-                .password(registrationDTO.getPassword())
+                .password(registrationDto.getPassword())
                 .build();
         AuthResponseDto authResponse = authServiceClient.login(authRequest);
 
@@ -80,7 +74,7 @@ public class UserServiceImpl implements UserService {
                 .aggregateId(savedUser.getId())
                 .aggregateType("User")
                 .payload("{ \"userId\": " + savedUser.getId() + ", \"initialBalance\": " + initialBalance + " }")
-                .routingKey(routingKey)
+                .routingKey(WalletConstants.WALLET_CREATE_ROUTING_KEY)
                 .status(PENDING.name())
                 .createdAt(LocalDateTime.now().toString())
                 .build();
@@ -132,36 +126,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Users login(String email, String password) {
-        logger.info("User login attempt with email: {}", email);
-        Users user = findUserByEmail(email);
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            logger.error("Invalid password for email: {}", email);
-            throw new CustomErrorException(
-                    ErrorCode.INVALID_EMAIL_OR_PASSWORD.getHttpStatus(),
-                    ErrorCode.INVALID_EMAIL_OR_PASSWORD.getMessage(),
-                    ErrorPath.POST_LOGIN_API.getPath()
-            );
-        }
-
-        logger.info("User with email: {} logged in successfully.", email);
-        return user;
-    }
-
-    @Override
-    public Optional<Users> getUserById(Long id) {
-        logger.info("Fetching user by ID: {}", id);
-        return Optional.of(findUserById(id));
-    }
-
-    @Override
-    public Optional<Users> findByEmail(String email) {
-        logger.info("Fetching user by email: {}", email);
-        return usersRepository.findByEmail(email);
-    }
-
-    @Override
     public boolean verifyPassword(String email, String rawPassword) {
         Users user = findUserByEmail(email);
         return passwordEncoder.matches(rawPassword, user.getPassword());
@@ -178,7 +142,7 @@ public class UserServiceImpl implements UserService {
 
         UsersDto usersDTO = usersMapper.toDto(user);
 
-        String cacheKey = cachePrefix + userId;
+        String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + userId;
         WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedBalance != null) {
@@ -186,9 +150,28 @@ public class UserServiceImpl implements UserService {
             usersDTO.setUsdBalance(cachedBalance.getUsdBalance());
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
         } else {
-            logger.warn("Balance not found in Redis for user ID: {}", userId);
-            usersDTO.setUsdBalance(BigDecimal.valueOf(0.0));
-            usersDTO.setBtcBalance(BigDecimal.valueOf(0.0));
+            logger.warn("Balance not found in Redis for user ID: {}. Requesting from wallet-service...", userId);
+
+            // Request the balance from wallet-service via Feign client (WalletServiceClient)
+            try {
+                WalletResponseDto walletBalance = walletServiceClient.getWalletBalance(userId); // Assuming this method exists in the WalletServiceClient
+
+                // Update the DTO with the fetched balances
+                usersDTO.setUsdBalance(walletBalance.getUsdBalance());
+                usersDTO.setBtcBalance(walletBalance.getBtcBalance());
+
+                // Cache the balance in Redis for future use
+                redisTemplate.opsForValue().set(cacheKey, walletBalance);
+                logger.info("Balance for user ID {} cached in Redis.", userId);
+
+            } catch (Exception e) {
+                logger.error("Error while fetching wallet balance from wallet-service for user ID {}: {}", userId, e.getMessage());
+                throw new CustomErrorException(
+                        ErrorCode.WALLET_SERVICE_ERROR.getHttpStatus(),
+                        ErrorCode.WALLET_SERVICE_ERROR.getMessage(),
+                        ErrorPath.GET_WALLET_BALANCE_API.getPath() + userId
+                );
+            }
         }
 
         return usersDTO;
