@@ -7,6 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/outbox")
 public class OutboxController {
@@ -21,10 +24,11 @@ public class OutboxController {
     public ResponseEntity<Void> sendTransactionEvent(
             @RequestParam("transactionId") Long transactionId,
             @RequestParam("userId") Long userId,
-            @RequestParam("btcAmount") double btcAmount) {
+            @RequestParam("btcAmount") BigDecimal btcAmount,
+            @RequestParam("usdAmount") BigDecimal usdAmount) {
         try {
             // Here you can handle the logic to create an outbox event from the transaction details
-            outboxService.processTransactionEvent(transactionId, userId, btcAmount);
+            outboxService.processTransactionEvent(transactionId, userId, btcAmount,usdAmount);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing transaction event");

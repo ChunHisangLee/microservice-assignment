@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 public class WalletUpdateListener {
 
@@ -23,7 +25,8 @@ public class WalletUpdateListener {
 
         try {
             // Validate the incoming message before proceeding
-            if (message.getUsdAmount() < 0 || message.getBtcAmount() < 0) {
+            if (message.getUsdAmount().compareTo(BigDecimal.ZERO) < 0 ||
+                    message.getBtcAmount().compareTo(BigDecimal.ZERO) < 0) {
                 logger.error("Invalid update amounts for user ID: {}. USD: {}, BTC: {}. Amounts must be non-negative.",
                         message.getUserId(), message.getUsdAmount(), message.getBtcAmount());
                 return;

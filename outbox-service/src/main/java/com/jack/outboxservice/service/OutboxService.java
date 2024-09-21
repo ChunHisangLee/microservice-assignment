@@ -2,6 +2,7 @@ package com.jack.outboxservice.service;
 
 import com.jack.outboxservice.dto.OutboxDto;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface OutboxService {
@@ -16,5 +17,5 @@ public interface OutboxService {
     Optional<OutboxDto> getOutboxById(Long id);
 
     // Method to process a transaction event from transaction-service
-    void processTransactionEvent(Long transactionId, Long userId, double btcAmount);
+    void processTransactionEvent(Long transactionId, Long userId, BigDecimal btcAmount,BigDecimal usdAmount);
 }

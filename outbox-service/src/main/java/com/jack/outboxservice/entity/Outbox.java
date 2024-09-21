@@ -20,7 +20,6 @@ public class Outbox {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String eventType;
     private String payload;
     private String routingKey;

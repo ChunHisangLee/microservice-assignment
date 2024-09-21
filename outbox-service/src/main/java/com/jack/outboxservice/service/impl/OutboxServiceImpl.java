@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,8 +30,8 @@ public class OutboxServiceImpl implements OutboxService {
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.wallet.queue.create}")
-    private String walletCreationQueue;
+    @Value("${app.wallet.queue.update}")
+    private String walletUpdateQueue;
 
     public OutboxServiceImpl(OutboxRepository outboxRepository, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
         this.outboxRepository = outboxRepository;
@@ -86,13 +87,13 @@ public class OutboxServiceImpl implements OutboxService {
 
     // Process a transaction event from transaction-service
     @Override
-    public void processTransactionEvent(Long transactionId, Long userId, double btcAmount) {
+    public void processTransactionEvent(Long transactionId, Long userId, BigDecimal btcAmount,BigDecimal usdAmount) {
         try {
             // Create a new outbox entry for the transaction event
             Outbox outbox = Outbox.builder()
-                    .eventType("WALLET_CREATION") // Assuming the event type is wallet creation
-                    .routingKey(walletCreationQueue)
-                    .payload(objectMapper.writeValueAsString(new WalletUpdateMessageDto( userId, btcAmount)))
+                    .eventType("WALLET_UPDATE")
+                    .routingKey(walletUpdateQueue)
+                    .payload(objectMapper.writeValueAsString(new WalletUpdateMessageDto( userId, btcAmount,usdAmount)))
                     .createdAt(LocalDateTime.now())
                     .status(EventStatus.PENDING)
                     .build();

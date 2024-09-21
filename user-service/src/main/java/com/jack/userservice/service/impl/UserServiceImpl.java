@@ -24,6 +24,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -186,8 +187,8 @@ public class UserServiceImpl implements UserService {
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
         } else {
             logger.warn("Balance not found in Redis for user ID: {}", userId);
-            usersDTO.setUsdBalance(0.0);
-            usersDTO.setBtcBalance(0.0);
+            usersDTO.setUsdBalance(BigDecimal.valueOf(0.0));
+            usersDTO.setBtcBalance(BigDecimal.valueOf(0.0));
         }
 
         return usersDTO;

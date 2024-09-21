@@ -15,6 +15,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 public class WalletServiceImpl implements WalletService {
     private static final Logger logger = LoggerFactory.getLogger(WalletServiceImpl.class);
@@ -45,7 +47,7 @@ public class WalletServiceImpl implements WalletService {
         Wallet wallet = new Wallet();
         wallet.setUserId(message.getUserId());
         wallet.setUsdBalance(message.getInitialBalance());
-        wallet.setBtcBalance(0.0);
+        wallet.setBtcBalance(BigDecimal.valueOf(0.0));
 
         wallet = walletRepository.save(wallet);
 
@@ -65,11 +67,11 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public void updateWallet(Long userId, Double usdAmount, Double btcAmount) {
+    public void updateWallet(Long userId, BigDecimal usdAmount, BigDecimal btcAmount) {
         Wallet wallet = getWalletByUserId(userId);
         logger.info("Updating wallet for user ID: {} | USD: {} | BTC: {}", userId, usdAmount, btcAmount);
-        wallet.setUsdBalance(wallet.getUsdBalance() + usdAmount);
-        wallet.setBtcBalance(wallet.getBtcBalance() + btcAmount);
+        wallet.setUsdBalance(wallet.getUsdBalance().add(usdAmount));
+        wallet.setBtcBalance(wallet.getBtcBalance().add(btcAmount));
         walletRepository.save(wallet);
 
         updateCacheAndNotify(wallet);
@@ -79,23 +81,22 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public void debitWallet(Long userId, Double amount) {
+    public void debitWallet(Long userId, BigDecimal amount) {
         Wallet wallet = getWalletByUserId(userId);
         logger.info("Debiting {} USD from wallet of user ID: {}", amount, userId);
 
-        if (wallet.getUsdBalance() < amount) {
+        if (wallet.getUsdBalance().compareTo(amount) < 0) {
             logger.error("Insufficient balance. Attempted to debit {} USD from user ID: {}", amount, userId);
             throw new InsufficientFundsException("Insufficient USD balance.");
         }
 
-        wallet.setUsdBalance(wallet.getUsdBalance() - amount);
+        wallet.setUsdBalance(wallet.getUsdBalance().subtract(amount));
         walletRepository.save(wallet);
-
         updateCacheAndNotify(wallet);
-
         logger.info("Wallet debited and balance published for user ID: {}", userId);
     }
 
+    @Transactional
     @Override
     public WalletBalanceDto getWalletBalance(Long userId) {
         String cacheKey = cachePrefix + userId;
@@ -118,6 +119,7 @@ public class WalletServiceImpl implements WalletService {
         return walletRepository.findByUserId(userId).isPresent();
     }
 
+    @Transactional
     @Override
     public void updateWalletBalance(WalletBalanceDto WalletBalanceDto) {
         Wallet wallet = getWalletByUserId(WalletBalanceDto.getUserId());

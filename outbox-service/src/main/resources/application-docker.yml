@@ -29,10 +29,12 @@ app:
     reply-to-queue: user-service.response.queue  # Reply queue for responses
     queue:
       create: wallet.create.queue      # Queue for wallet creation messages
+      update: wallet.update.queue      # Queue for wallet update messages
       balance: wallet.balance.queue    # Queue for wallet balance requests
     exchange: wallet-exchange          # Exchange for wallet messages
     routing-key:
       create: wallet.creation          # Routing key for wallet creation
+      update: wallet.update          # Routing key for wallet update
       balance: wallet.balance          # Routing key for wallet balance requests
 
 # SpringDoc settings for API documentation

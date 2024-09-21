@@ -1,5 +1,6 @@
 package com.jack.common.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
 public class WalletUpdateMessageDto implements Serializable {
     private Long userId;
     private BigDecimal usdAmount;
