@@ -30,19 +30,6 @@ spring:
       password: Ab123456
       timeout: 60000ms  # 60 seconds, specified in milliseconds
 
-# Custom application-specific settings
-app:
-  wallet:
-    cache-prefix: "walletBalance:"  # Redis key prefix for wallet balances
-    reply-to-queue: user-service.response.queue  # Reply queue for responses
-    queue:
-      create: wallet.create.queue      # Queue for wallet creation messages
-      balance: wallet.balance.queue    # Queue for wallet balance requests
-    exchange: wallet-exchange          # Exchange for wallet messages
-    routing-key:
-      create: wallet.creation          # Routing key for wallet creation
-      balance: wallet.balance          # Routing key for wallet balance requests
-
 # SpringDoc settings for API documentation
 springdoc:
   api-docs:

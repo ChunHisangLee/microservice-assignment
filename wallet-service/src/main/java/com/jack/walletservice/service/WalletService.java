@@ -1,8 +1,8 @@
 package com.jack.walletservice.service;
 
-import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.dto.response.WalletCreateMessageDto;
-import com.jack.walletservice.entity.Wallet;
+import com.jack.common.dto.response.WalletResponseDto;
+import com.jack.walletservice.dto.WalletDto;
 
 import java.math.BigDecimal;
 
@@ -10,9 +10,9 @@ public interface WalletService {
 
     void createWallet(WalletCreateMessageDto message);
 
-    Wallet getWalletByUserId(Long userId);
+    WalletDto getWalletByUserId(Long userId);
 
-    void updateWallet(Long userId, BigDecimal usdAmount, BigDecimal btcAmount);
+    WalletDto updateWallet(Long userId, BigDecimal usdAmount, BigDecimal btcAmount);
 
     void updateWalletBalance(WalletResponseDto WalletResponseDto);
 

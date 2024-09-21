@@ -1,23 +1,14 @@
 package com.jack.userservice.client;
 
+import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletBalanceMessageDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class WalletBalanceRequestSender {
 
     private final RabbitTemplate rabbitTemplate;
-
-    @Value("${app.wallet.exchange}")
-    private String walletExchange;
-
-    @Value("${app.wallet.routing-key.balance}")
-    private String walletBalanceRoutingKey;
-
-    @Value("${app.wallet.reply-to-queue}")
-    private String replyToQueue;
 
     public WalletBalanceRequestSender(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
@@ -30,9 +21,9 @@ public class WalletBalanceRequestSender {
                 .build();
 
         // Send the request to the wallet service via RabbitMQ
-        rabbitTemplate.convertAndSend(walletExchange, walletBalanceRoutingKey, request, message -> {
+        rabbitTemplate.convertAndSend(WalletConstants.WALLET_EXCHANGE, WalletConstants.WALLET_BALANCE_ROUTING_KEY, request, message -> {
             // Set the reply-to queue where the response will be sent
-            message.getMessageProperties().setReplyTo(replyToQueue);
+            message.getMessageProperties().setReplyTo(WalletConstants.WALLET_REPLY_TO_QUEUE);
             return message;
         });
     }

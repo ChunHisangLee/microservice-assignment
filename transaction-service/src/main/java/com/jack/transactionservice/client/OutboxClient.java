@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @FeignClient(name = "outbox-service", url = "${OUTBOX_SERVICE_URL:https://outbox-service:8083}")
 public interface OutboxClient {
 
-    @PostMapping("api/outbox/sendTransactionEvent")
+    @PostMapping("/api/outbox/sendTransactionEvent")
     void sendTransactionEvent(@RequestParam("transactionId") Long transactionId,
                               @RequestParam("userId") Long userId,
                               @RequestParam("btcAmount") BigDecimal btcAmount,
