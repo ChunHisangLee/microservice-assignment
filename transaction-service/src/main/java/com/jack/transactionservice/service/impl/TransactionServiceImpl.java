@@ -32,6 +32,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final OutboxClient outboxClient;
     private final WalletServiceClient walletServiceClient;
     private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${app.transaction.cache-prefix}")
     private String cachePrefix;
@@ -41,14 +42,14 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionDto createTransaction(CreateTransactionRequestDto request, TransactionType transactionType) {
-        // Step 1: Fetch BTC price and btcPriceHistoryId from Redis (or the price service)
+        // Step 1: Fetch BTC price and btcPriceHistoryId from Redis
         BTCPriceResponseDto btcPrice = getCurrentBTCPriceFromRedis();
 
         // Step 2: Create and save the transaction in the database
         Transaction transaction = Transaction.builder()
                 .userId(request.getUserId())
                 .btcAmount(request.getBtcAmount())
-                .usdAmount(calculateUsdAmount(btcPrice.getBtdPrice(), request.getBtcAmount()))
+                .usdAmount(calculateUsdAmount(btcPrice.getBtcPrice(), request.getBtcAmount()))
                 .btcPriceHistoryId(btcPrice.getId())
                 .transactionType(transactionType)
                 .transactionTime(LocalDateTime.now())
@@ -65,7 +66,7 @@ public class TransactionServiceImpl implements TransactionService {
         // Step 5: Call the WalletService to update the user's wallet balances
         walletServiceClient.updateWalletBalance(request.getUserId(), newUsdBalance.doubleValue(), newBtcBalance.doubleValue());
 
-        // Step 6: Cache the transaction data in Redis using cachePrefix
+        // Step 6: Cache the transaction data in Redis
         cacheTransaction(transaction);
 
         // Step 7: Return the transaction DTO
@@ -80,11 +81,17 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void cacheTransaction(Transaction transaction) {
         String redisKey = cachePrefix + transaction.getId();
-        redisTemplate.opsForValue().set(redisKey, transaction.toString(), 10, TimeUnit.MINUTES); // Example: caching for 10 minutes
+        try {
+            // Serialize a transaction object to JSON for caching
+            String transactionJson = objectMapper.writeValueAsString(transaction);
+            redisTemplate.opsForValue().set(redisKey, transactionJson, 10, TimeUnit.MINUTES);  // Cache for 10 minutes
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize Transaction to cache: " + e.getMessage(), e);
+        }
     }
 
     private BigDecimal calculateNewUsdBalance(BigDecimal usdBalanceBefore, BigDecimal btcAmount, TransactionType transactionType) {
-        BigDecimal btcPrice = BigDecimal.valueOf(getCurrentBtcPrice()); // Fetch BTC price from Redis
+        BigDecimal btcPrice = BigDecimal.valueOf(getCurrentBtcPrice());  // Fetch BTC price from Redis
         if (transactionType == TransactionType.BUY) {
             return usdBalanceBefore.subtract(btcAmount.multiply(btcPrice));
         } else {
@@ -109,9 +116,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BTCPriceResponseDto parseBTCPriceResponse(String btcPriceStr) {
         try {
-            return new ObjectMapper().readValue(btcPriceStr, BTCPriceResponseDto.class);
+            return objectMapper.readValue(btcPriceStr, BTCPriceResponseDto.class);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse BTC price from Redis", e);
+            throw new IllegalStateException("Failed to parse BTC price from Redis: " + e.getMessage(), e);
         }
     }
 
@@ -126,7 +133,7 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             return Double.parseDouble(priceStr);
         } catch (NumberFormatException e) {
-            throw new IllegalStateException("Failed to parse BTC price from Redis", e);
+            throw new IllegalStateException("Failed to parse BTC price from Redis: " + e.getMessage(), e);
         }
     }
 

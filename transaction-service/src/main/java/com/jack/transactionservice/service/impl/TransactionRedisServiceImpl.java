@@ -1,60 +1,70 @@
 package com.jack.transactionservice.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.service.TransactionRedisService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class TransactionRedisServiceImpl implements TransactionRedisService {
+@RequiredArgsConstructor
 
-    private final RedisTemplate<String, TransactionDto> redisTransactionTemplate;
-    private final RedisTemplate<String, Page<TransactionDto>> redisTransactionPageTemplate;
+public class TransactionRedisServiceImpl implements TransactionRedisService {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionRedisServiceImpl.class);
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Value("${app.transaction.cache-prefix}")
     private String cachePrefix;
 
-    @Autowired
-    public TransactionRedisServiceImpl(RedisTemplate<String, TransactionDto> redisTransactionTemplate,
-                                       RedisTemplate<String, Page<TransactionDto>> redisTransactionPageTemplate) {
-        this.redisTransactionTemplate = redisTransactionTemplate;
-        this.redisTransactionPageTemplate = redisTransactionPageTemplate;
-    }
+    @Value("${app.transaction.cache-ttl:10}")
+    private long cacheTTL;
 
     @Override
     public void saveTransactionToRedis(TransactionDto transactionDto) {
-        String redisKey = cachePrefix + transactionDto.getId();
-        redisTransactionTemplate.opsForValue().set(redisKey, transactionDto, 10, TimeUnit.MINUTES); // Cache with 10 min expiration
+        try {
+            String redisKey = cachePrefix + transactionDto.getId();
+            String transactionJson = objectMapper.writeValueAsString(transactionDto);
+            redisTemplate.opsForValue().set(redisKey, transactionJson, cacheTTL, TimeUnit.MINUTES);
+            logger.info("Transaction with ID {} has been cached in Redis with key: {} and TTL: {} minutes", transactionDto.getId(), redisKey, cacheTTL);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize TransactionDto with ID {} for caching", transactionDto.getId(), e);
+            throw new IllegalStateException("Failed to serialize TransactionDto to JSON for caching", e);
+        }
     }
 
     @Override
     public TransactionDto getTransactionFromRedis(Long transactionId) {
         String redisKey = cachePrefix + transactionId;
-        return redisTransactionTemplate.opsForValue().get(redisKey);
+        String transactionJson = redisTemplate.opsForValue().get(redisKey);
+        logger.info("Transaction with ID {} was retrieved from Redis with key: {}", transactionId, redisKey);
+        return Optional.ofNullable(transactionJson)
+                .map(this::deserializeTransaction)
+                .orElse(null);
     }
 
     @Override
     public void deleteTransactionFromRedis(Long transactionId) {
         String redisKey = cachePrefix + transactionId;
-        redisTransactionTemplate.delete(redisKey);
+        redisTemplate.delete(redisKey);
+        logger.info("Transaction with ID {} has been removed from Redis for key: {}", transactionId, redisKey);
+
     }
 
-    public void saveTransactionPageToRedis(Page<TransactionDto> transactionPage, Long userId) {
-        String redisKey = cachePrefix + "user:" + userId;
-        redisTransactionPageTemplate.opsForValue().set(redisKey, transactionPage, 10, TimeUnit.MINUTES);
-    }
-
-    public Page<TransactionDto> getTransactionPageFromRedis(Long userId) {
-        String redisKey = cachePrefix + "user:" + userId;
-        return redisTransactionPageTemplate.opsForValue().get(redisKey);
-    }
-
-    public void deleteTransactionPageFromRedis(Long userId) {
-        String redisKey = cachePrefix + "user:" + userId;
-        redisTransactionPageTemplate.delete(redisKey);
+    private TransactionDto deserializeTransaction(String transactionJson) {
+        try {
+            return objectMapper.readValue(transactionJson, TransactionDto.class);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to deserialize transaction JSON for key: {}", transactionJson, e);
+            throw new IllegalStateException("Failed to deserialize JSON to TransactionDto", e);
+        }
     }
 }

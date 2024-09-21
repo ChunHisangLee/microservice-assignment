@@ -5,7 +5,7 @@ import com.jack.common.constants.ErrorPath;
 import com.jack.common.constants.SecurityConstants;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import com.jack.common.dto.response.UserRegistrationDto;
+import com.jack.common.dto.response.UserRegistrationResponseDto;
 import com.jack.common.dto.response.UserResponseDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
@@ -33,8 +33,8 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserRegistrationDto userRegistrationDTO) {
-        UserResponseDto userResponse = userService.register(userRegistrationDTO);
+    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserRegistrationResponseDto userRegistrationResponseDTO) {
+        UserResponseDto userResponse = userService.register(userRegistrationResponseDTO);
         return ResponseEntity.ok(userResponse);
     }
 

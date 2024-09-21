@@ -8,7 +8,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class UserRegistrationDto {
+public class UserRegistrationResponseDto {
     @NotBlank(message = "Name cannot be blank")
     private String name;
 

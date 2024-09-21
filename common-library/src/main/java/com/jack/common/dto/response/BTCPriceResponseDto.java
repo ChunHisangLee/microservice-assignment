@@ -11,5 +11,5 @@ import java.math.BigDecimal;
 @Builder
 public class BTCPriceResponseDto {
     private Long id;
-    private BigDecimal btdPrice;
+    private BigDecimal btcPrice;
 }

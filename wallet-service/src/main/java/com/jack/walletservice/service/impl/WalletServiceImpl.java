@@ -1,6 +1,6 @@
 package com.jack.walletservice.service.impl;
 
-import com.jack.common.dto.response.WalletBalanceDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.InsufficientFundsException;
@@ -22,13 +22,13 @@ public class WalletServiceImpl implements WalletService {
     private static final Logger logger = LoggerFactory.getLogger(WalletServiceImpl.class);
 
     private final WalletRepository walletRepository;
-    private final RedisTemplate<String, WalletBalanceDto> redisTemplate;
+    private final RedisTemplate<String, WalletResponseDto> redisTemplate;
     private final WalletBalancePublisher walletBalancePublisher;
 
     @Value("${app.wallet.cache-prefix}")
     private String cachePrefix;
 
-    public WalletServiceImpl(WalletRepository walletRepository, RedisTemplate<String, WalletBalanceDto> redisTemplate, WalletBalancePublisher walletBalancePublisher) {
+    public WalletServiceImpl(WalletRepository walletRepository, RedisTemplate<String, WalletResponseDto> redisTemplate, WalletBalancePublisher walletBalancePublisher) {
         this.walletRepository = walletRepository;
         this.redisTemplate = redisTemplate;
         this.walletBalancePublisher = walletBalancePublisher;
@@ -98,11 +98,11 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public WalletBalanceDto getWalletBalance(Long userId) {
+    public WalletResponseDto getWalletBalance(Long userId) {
         String cacheKey = cachePrefix + userId;
 
         // Check Redis cache first
-        WalletBalanceDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
+        WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedBalance != null) {
             logger.info("Cache hit for user ID: {}", userId);
@@ -121,19 +121,19 @@ public class WalletServiceImpl implements WalletService {
 
     @Transactional
     @Override
-    public void updateWalletBalance(WalletBalanceDto WalletBalanceDto) {
-        Wallet wallet = getWalletByUserId(WalletBalanceDto.getUserId());
-        wallet.setUsdBalance(WalletBalanceDto.getUsdBalance());
-        wallet.setBtcBalance(WalletBalanceDto.getBtcBalance());
+    public void updateWalletBalance(WalletResponseDto WalletResponseDto) {
+        Wallet wallet = getWalletByUserId(WalletResponseDto.getUserId());
+        wallet.setUsdBalance(WalletResponseDto.getUsdBalance());
+        wallet.setBtcBalance(WalletResponseDto.getBtcBalance());
         walletRepository.save(wallet);
 
         updateCacheAndNotify(wallet);
 
-        logger.info("Wallet and cache updated, balance published for user ID: {}", WalletBalanceDto.getUserId());
+        logger.info("Wallet and cache updated, balance published for user ID: {}", WalletResponseDto.getUserId());
     }
 
-    private WalletBalanceDto updateCacheAndNotify(Wallet wallet) {
-        WalletBalanceDto walletBalanceDto = WalletBalanceDto.builder()
+    private WalletResponseDto updateCacheAndNotify(Wallet wallet) {
+        WalletResponseDto walletResponseDto = WalletResponseDto.builder()
                 .userId(wallet.getUserId())
                 .usdBalance(wallet.getUsdBalance())
                 .btcBalance(wallet.getBtcBalance())
@@ -142,13 +142,13 @@ public class WalletServiceImpl implements WalletService {
         String cacheKey = cachePrefix + wallet.getUserId();
 
         // Update Redis cache
-        redisTemplate.opsForValue().set(cacheKey, walletBalanceDto);
+        redisTemplate.opsForValue().set(cacheKey, walletResponseDto);
         logger.info("Cache updated for user ID: {}", wallet.getUserId());
 
         // Notify other services via RabbitMQ
-        walletBalancePublisher.publishWalletBalance(walletBalanceDto);
+        walletBalancePublisher.publishWalletBalance(walletResponseDto);
         logger.info("Balance published for user ID: {}", wallet.getUserId());
 
-        return walletBalanceDto;
+        return walletResponseDto;
     }
 }

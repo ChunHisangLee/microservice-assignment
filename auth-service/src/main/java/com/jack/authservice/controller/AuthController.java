@@ -1,10 +1,10 @@
 package com.jack.authservice.controller;
 
+import com.jack.authservice.service.AuthService;
+import com.jack.authservice.service.TokenService;
 import com.jack.common.constants.SecurityConstants;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import com.jack.authservice.service.AuthService;
-import com.jack.authservice.service.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(SecurityConstants.AUTHORIZATION_HEADER) String token) {
         if (token != null && token.startsWith(SecurityConstants.BEARER_PREFIX)) {
-            String jwtToken = token.substring(7);  // Remove "Bearer " prefix
+            String jwtToken = token.substring(SecurityConstants.PREFIX_INDEX);
 
             try {
                 tokenService.invalidateToken(jwtToken);
@@ -46,7 +46,7 @@ public class AuthController {
             }
         } else {
             logger.warn("Invalid token provided for logout.");
-            return ResponseEntity.badRequest().build();  // HTTP 400 Bad Request if no token found
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -56,7 +56,7 @@ public class AuthController {
             @RequestParam Long userId) {
 
         if (token != null && token.startsWith(SecurityConstants.BEARER_PREFIX)) {
-            token = token.substring(SecurityConstants.PREFIX_INDEX);  // Remove "Bearer " prefix
+            token = token.substring(SecurityConstants.PREFIX_INDEX);
 
             try {
                 boolean isValid = tokenService.validateToken(token, userId);
@@ -66,15 +66,15 @@ public class AuthController {
                     return ResponseEntity.ok(true);
                 } else {
                     logger.warn("Token is invalid or does not match userId: {}", userId);
-                    return ResponseEntity.status(401).body(false);  // Unauthorized if token is invalid
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
                 }
             } catch (Exception e) {
                 logger.error("Error validating token: {}", e.getMessage());
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);  // Internal server error in case of an exception
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
             }
         } else {
             logger.warn("Invalid token format.");
-            return ResponseEntity.badRequest().body(false);  // Bad Request if a token format is incorrect
+            return ResponseEntity.badRequest().body(false);
         }
     }
 }

@@ -5,9 +5,9 @@ import com.jack.common.constants.ErrorPath;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.request.OutboxRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import com.jack.common.dto.response.UserRegistrationDto;
+import com.jack.common.dto.response.UserRegistrationResponseDto;
 import com.jack.common.dto.response.UserResponseDto;
-import com.jack.common.dto.response.WalletBalanceDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.client.OutboxServiceClient;
@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthServiceClient authServiceClient;
     private final UsersMapper usersMapper;
-    private final RedisTemplate<String, WalletBalanceDto> redisTemplate;
+    private final RedisTemplate<String, WalletResponseDto> redisTemplate;
     private final OutboxServiceClient outboxServiceClient;
 
     @Value("${app.wallet.cache-prefix}")
@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
     private String routingKey;
 
     @Override
-    public UserResponseDto register(UserRegistrationDto registrationDTO) {
+    public UserResponseDto register(UserRegistrationResponseDto registrationDTO) {
         if (usersRepository.findByEmail(registrationDTO.getEmail()).isPresent()) {
             logger.error("User registration failed. User with email '{}' already exists", registrationDTO.getEmail());
             throw new CustomErrorException(
@@ -179,7 +179,7 @@ public class UserServiceImpl implements UserService {
         UsersDto usersDTO = usersMapper.toDto(user);
 
         String cacheKey = cachePrefix + userId;
-        WalletBalanceDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
+        WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedBalance != null) {
             logger.info("Returning balance from Redis for user ID: {}", userId);

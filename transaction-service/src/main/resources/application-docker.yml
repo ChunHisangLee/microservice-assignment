@@ -34,6 +34,7 @@ spring:
 app:
   transaction:
     cache-prefix: "transactionCache:"  # Redis key prefix for transaction data
+    cache-ttl: 10  # TTL in minutes (you can change this value)
     reply-to-queue: transaction-service.response.queue  # Reply queue for responses
     queue:
       create: transaction.create.queue   # Queue for transaction creation messages

@@ -1,6 +1,6 @@
 package com.jack.walletservice.publisher;
 
-import com.jack.common.dto.response.WalletBalanceDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -24,8 +24,8 @@ public class WalletBalancePublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void publishWalletBalance(WalletBalanceDto walletBalanceDto) {
-        rabbitTemplate.convertAndSend(walletExchange, walletBalanceRoutingKey, walletBalanceDto);
-        logger.info("Published wallet balance for user ID: {} to RabbitMQ", walletBalanceDto.getUserId());
+    public void publishWalletBalance(WalletResponseDto walletResponseDto) {
+        rabbitTemplate.convertAndSend(walletExchange, walletBalanceRoutingKey, walletResponseDto);
+        logger.info("Published wallet balance for user ID: {} to RabbitMQ", walletResponseDto.getUserId());
     }
 }

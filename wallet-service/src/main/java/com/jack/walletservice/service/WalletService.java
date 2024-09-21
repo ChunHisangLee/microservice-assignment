@@ -1,6 +1,6 @@
 package com.jack.walletservice.service;
 
-import com.jack.common.dto.response.WalletBalanceDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.walletservice.entity.Wallet;
 
@@ -14,11 +14,11 @@ public interface WalletService {
 
     void updateWallet(Long userId, BigDecimal usdAmount, BigDecimal btcAmount);
 
-    void updateWalletBalance(WalletBalanceDto WalletBalanceDto);
+    void updateWalletBalance(WalletResponseDto WalletResponseDto);
 
     void debitWallet(Long userId, BigDecimal amount);
 
-    WalletBalanceDto getWalletBalance(Long userId);
+    WalletResponseDto getWalletBalance(Long userId);
 
     boolean walletExists(Long userId);
 }
