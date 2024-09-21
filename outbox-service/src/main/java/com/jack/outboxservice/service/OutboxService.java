@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface OutboxService {
-
     // Method to save an Outbox entry
     OutboxDto saveOutbox(OutboxDto outboxDTO);
 

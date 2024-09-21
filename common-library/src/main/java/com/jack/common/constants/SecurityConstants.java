@@ -10,8 +10,10 @@ public class SecurityConstants {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
     public static final int PREFIX_INDEX = 7;
-    public static final int DEFAULT_PAGE_NUMBER = 0;
-    public static final int DEFAULT_PAGE_SIZE = 20;
+
+    // JWT Expiration Time (1 hour in milliseconds)
+    public static final long JWT_EXPIRATION_MS = 3600000;  // 1 hour
+    public static final String JWT_SECRET_KEY = "Xb34fJd9kPbvmJc84mDkV9b3Xb4fJd9kPbvmJc84mDkV9b3Xb34fJd9kPbvmJc84";
 
     // Enum for public URLs
     public enum PublicUrls {

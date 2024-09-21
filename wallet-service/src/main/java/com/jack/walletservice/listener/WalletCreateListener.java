@@ -1,5 +1,6 @@
 package com.jack.walletservice.listener;
 
+import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.walletservice.service.WalletService;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ public class WalletCreateListener {
     }
 
     // Listen to the queue for wallet creation messages
-    @RabbitListener(queues = "${app.wallet.queue.create}")
+    @RabbitListener(queues = WalletConstants.WALLET_CREATE_QUEUE)
     public void handleWalletCreation(WalletCreateMessageDto message) {
         logger.info("Received Wallet Creation message for user ID: {}", message.getUserId());
 

@@ -32,20 +32,6 @@ spring:
       password: Ab123456
       timeout: 60000ms  # 60 seconds, specified in milliseconds
 
-# Custom application-specific settings
-app:
-  wallet:
-    queue:
-      create: wallet.create.queue      # Queue for wallet creation messages
-      update: wallet.update.queue      # Queue for wallet update messages
-      balance: wallet.balance.queue    # Queue for wallet balance requests
-    exchange: wallet-exchange          # Exchange for wallet messages
-    routing-key:
-      create: wallet.creation          # Routing key for wallet creation
-      update: wallet.update            # Routing key for wallet update
-      balance: wallet.balance          # Routing key for wallet balance requests
-
-
 # Logging level for the Wallet Service
 logging:
   level:

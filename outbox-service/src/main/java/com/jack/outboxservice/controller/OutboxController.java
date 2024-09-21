@@ -2,7 +2,10 @@ package com.jack.outboxservice.controller;
 
 import com.jack.outboxservice.dto.OutboxDto;
 import com.jack.outboxservice.service.OutboxService;
+import com.jack.outboxservice.service.impl.OutboxServiceImpl;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/outbox")
 public class OutboxController {
+    private static final Logger logger = LoggerFactory.getLogger(OutboxController.class);
     private final OutboxService outboxService;
 
     public OutboxController(OutboxService outboxService) {
@@ -27,10 +31,11 @@ public class OutboxController {
             @RequestParam("btcAmount") BigDecimal btcAmount,
             @RequestParam("usdAmount") BigDecimal usdAmount) {
         try {
-            // Here you can handle the logic to create an outbox event from the transaction details
             outboxService.processTransactionEvent(transactionId, userId, btcAmount,usdAmount);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (Exception e) {
+            logger.error("Error processing transaction event: transactionId={}, userId={}, btcAmount={}, usdAmount={}, error={}",
+                    transactionId, userId, btcAmount, usdAmount, e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing transaction event");
         }
     }
@@ -39,7 +44,7 @@ public class OutboxController {
     @PostMapping
     public ResponseEntity<OutboxDto> createOutbox(@Valid @RequestBody OutboxDto outboxDTO) {
         OutboxDto savedOutbox = outboxService.saveOutbox(outboxDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedOutbox); // Use CREATED (201) status for new resource
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedOutbox);
     }
 
     @GetMapping("/{id}")

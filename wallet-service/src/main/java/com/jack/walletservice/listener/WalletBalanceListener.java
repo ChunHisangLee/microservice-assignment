@@ -1,5 +1,6 @@
 package com.jack.walletservice.listener;
 
+import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletBalanceMessageDto;
 import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.walletservice.entity.Wallet;
@@ -25,7 +26,7 @@ public class WalletBalanceListener {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    @RabbitListener(queues = "${app.wallet.queue.balance}")
+    @RabbitListener(queues = WalletConstants.WALLET_BALANCE_QUEUE)
     public void handleWalletBalanceRequest(WalletBalanceMessageDto walletBalanceMessageDto, Message message) {
         Long userId = walletBalanceMessageDto.getUserId();
         logger.info("Received Wallet Balance Request for UserID: {}", userId);

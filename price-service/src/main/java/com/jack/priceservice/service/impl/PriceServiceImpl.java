@@ -16,10 +16,10 @@ public class PriceServiceImpl implements PriceService {
     private static final Logger logger = LoggerFactory.getLogger(PriceServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${app.redis.btc-price-key}")
+    @Value("${app.redis.btc-price-key:#{T(com.jack.common.constants.ApplicationConstants).BTC_PRICE_KEY}}")
     private String btcPriceKey;
 
-    @Value("${initial.price:100.00}")
+    @Value("${initial.price:#{T(com.jack.common.constants.ApplicationConstants).INITIAL_PRICE}}")
     private BigDecimal initialPrice;
 
     public PriceServiceImpl(RedisTemplate<String, String> redisTemplate) {
@@ -49,6 +49,11 @@ public class PriceServiceImpl implements PriceService {
 
     @Override
     public void setPrice(BigDecimal price) {
+        if (price == null) {
+            logger.warn("Attempted to set null price in Redis.");
+            return;
+        }
+
         logger.info("Setting current BTC price in Redis with key: {} to value: {}", btcPriceKey, price);
         redisTemplate.opsForValue().set(btcPriceKey, String.valueOf(price), Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
         logger.info("BTC price set successfully in Redis.");

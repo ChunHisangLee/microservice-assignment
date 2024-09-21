@@ -1,7 +1,8 @@
 package com.jack.walletservice.service.impl;
 
-import com.jack.common.dto.response.WalletResponseDto;
+import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletCreateMessageDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.InsufficientFundsException;
 import com.jack.walletservice.exception.WalletNotFoundException;
@@ -10,7 +11,6 @@ import com.jack.walletservice.repository.WalletRepository;
 import com.jack.walletservice.service.WalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +24,7 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
     private final WalletBalancePublisher walletBalancePublisher;
-
-    @Value("${app.wallet.cache-prefix}")
-    private String cachePrefix;
+    private final String cachePrefix = WalletConstants.WALLET_CACHE_PREFIX;
 
     public WalletServiceImpl(WalletRepository walletRepository, RedisTemplate<String, WalletResponseDto> redisTemplate, WalletBalancePublisher walletBalancePublisher) {
         this.walletRepository = walletRepository;
@@ -37,22 +35,17 @@ public class WalletServiceImpl implements WalletService {
     @Transactional
     @Override
     public void createWallet(WalletCreateMessageDto message) {
-        // Check if wallet already exists for the user
         if (walletExists(message.getUserId())) {
             logger.warn("Wallet for user ID {} already exists. Skipping wallet creation.", message.getUserId());
             return;
         }
 
-        // Create a wallet for the user
         Wallet wallet = new Wallet();
         wallet.setUserId(message.getUserId());
         wallet.setUsdBalance(message.getInitialBalance());
         wallet.setBtcBalance(BigDecimal.valueOf(0.0));
-
         wallet = walletRepository.save(wallet);
-
         updateCacheAndNotify(wallet);
-
         logger.info("Wallet created successfully for user ID: {}", message.getUserId());
     }
 
@@ -73,9 +66,7 @@ public class WalletServiceImpl implements WalletService {
         wallet.setUsdBalance(wallet.getUsdBalance().add(usdAmount));
         wallet.setBtcBalance(wallet.getBtcBalance().add(btcAmount));
         walletRepository.save(wallet);
-
         updateCacheAndNotify(wallet);
-
         logger.info("Wallet updated and balance published for user ID: {}", userId);
     }
 
@@ -100,8 +91,6 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public WalletResponseDto getWalletBalance(Long userId) {
         String cacheKey = cachePrefix + userId;
-
-        // Check Redis cache first
         WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedBalance != null) {
@@ -109,7 +98,6 @@ public class WalletServiceImpl implements WalletService {
             return cachedBalance;
         }
 
-        // If not found in cache, fetch from the database
         Wallet wallet = getWalletByUserId(userId);
         return updateCacheAndNotify(wallet);
     }
@@ -126,9 +114,7 @@ public class WalletServiceImpl implements WalletService {
         wallet.setUsdBalance(WalletResponseDto.getUsdBalance());
         wallet.setBtcBalance(WalletResponseDto.getBtcBalance());
         walletRepository.save(wallet);
-
         updateCacheAndNotify(wallet);
-
         logger.info("Wallet and cache updated, balance published for user ID: {}", WalletResponseDto.getUserId());
     }
 
@@ -140,15 +126,10 @@ public class WalletServiceImpl implements WalletService {
                 .build();
 
         String cacheKey = cachePrefix + wallet.getUserId();
-
-        // Update Redis cache
         redisTemplate.opsForValue().set(cacheKey, walletResponseDto);
         logger.info("Cache updated for user ID: {}", wallet.getUserId());
-
-        // Notify other services via RabbitMQ
         walletBalancePublisher.publishWalletBalance(walletResponseDto);
         logger.info("Balance published for user ID: {}", wallet.getUserId());
-
         return walletResponseDto;
     }
 }

@@ -9,12 +9,12 @@ import com.jack.outboxservice.entity.Outbox;
 import com.jack.outboxservice.mapper.OutboxMapper;
 import com.jack.outboxservice.repository.OutboxRepository;
 import com.jack.outboxservice.service.OutboxService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,9 +23,7 @@ import java.util.Optional;
 
 @Service
 public class OutboxServiceImpl implements OutboxService {
-
     private static final Logger logger = LoggerFactory.getLogger(OutboxServiceImpl.class);
-
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
@@ -85,27 +83,21 @@ public class OutboxServiceImpl implements OutboxService {
         }
     }
 
-    // Process a transaction event from transaction-service
     @Override
-    public void processTransactionEvent(Long transactionId, Long userId, BigDecimal btcAmount,BigDecimal usdAmount) {
+    public void processTransactionEvent(Long transactionId, Long userId, BigDecimal btcAmount, BigDecimal usdAmount) {
         try {
-            // Create a new outbox entry for the transaction event
             Outbox outbox = Outbox.builder()
                     .eventType("WALLET_UPDATE")
                     .routingKey(walletUpdateQueue)
-                    .payload(objectMapper.writeValueAsString(new WalletUpdateMessageDto( userId, btcAmount,usdAmount)))
+                    .payload(objectMapper.writeValueAsString(new WalletUpdateMessageDto(userId, btcAmount, usdAmount)))
                     .createdAt(LocalDateTime.now())
                     .status(EventStatus.PENDING)
                     .build();
 
-            // Save the outbox entry to the repository
             outboxRepository.save(outbox);
-
-            logger.info("Transaction event successfully processed: transactionId={}, userId={}, btcAmount={}",
-                    transactionId, userId, btcAmount);
+            logger.info("Transaction event successfully processed: transactionId={}, userId={}, btcAmount={}", transactionId, userId, btcAmount);
         } catch (Exception e) {
-            logger.error("Failed to process transaction event: transactionId={}, userId={}, btcAmount={}, error={}",
-                    transactionId, userId, btcAmount, e.getMessage());
+            logger.error("Failed to process transaction event: transactionId={}, userId={}, btcAmount={}, error={}", transactionId, userId, btcAmount, e.getMessage());
         }
     }
 }
