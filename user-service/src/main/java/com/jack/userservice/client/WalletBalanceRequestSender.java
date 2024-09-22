@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class WalletBalanceRequestSender {
-
     private final RabbitTemplate rabbitTemplate;
 
     public WalletBalanceRequestSender(RabbitTemplate rabbitTemplate) {
