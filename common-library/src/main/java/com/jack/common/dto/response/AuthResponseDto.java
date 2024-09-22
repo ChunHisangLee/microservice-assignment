@@ -4,6 +4,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
 public class AuthResponseDto {
     private String token;
     private String tokenType;  // Typically "Bearer"

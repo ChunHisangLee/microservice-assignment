@@ -4,5 +4,5 @@ import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
 
 public interface AuthService {
-    AuthResponseDto login(AuthRequestDto authRequestDTO);;
+    AuthResponseDto login(AuthRequestDto authRequestDTO);
 }

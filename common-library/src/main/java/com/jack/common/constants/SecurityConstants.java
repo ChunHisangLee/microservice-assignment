@@ -10,6 +10,7 @@ public class SecurityConstants {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
     public static final int PREFIX_INDEX = 7;
+    public static final String BLACKLIST_PREFIX = "blacklist:";
 
     // JWT Expiration Time (1 hour in milliseconds)
     public static final long JWT_EXPIRATION_MS = 3600000;  // 1 hour

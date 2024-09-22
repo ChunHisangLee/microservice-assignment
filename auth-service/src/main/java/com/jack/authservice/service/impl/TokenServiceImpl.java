@@ -1,6 +1,7 @@
 package com.jack.authservice.service.impl;
 
 import com.jack.authservice.service.TokenService;
+import com.jack.common.constants.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -8,7 +9,6 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class TokenServiceImpl implements TokenService {
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
-    private static final String BLACKLIST_PREFIX = "blacklist:";
     private SecretKey secretKey;
-
-    @Value("${app.jwtSecret}")
-    private String jwtSecret;
-
-    @Value("${app.jwtExpirationMs}")
-    private long jwtExpirationMs;
 
     public TokenServiceImpl(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -36,24 +29,24 @@ public class TokenServiceImpl implements TokenService {
 
     @PostConstruct
     public void init() {
-        // Initialize the SecretKey after the jwtSecret has been injected
-        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        // Initialize the SecretKey using the JWT secret key from SecurityConstants
+        this.secretKey = Keys.hmacShaKeyFor(SecurityConstants.JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
     public void invalidateToken(String token) {
         if (token != null && !token.trim().isEmpty()) {
             // Check if token is already in the blacklist
-            Boolean isTokenBlacklisted = redisTemplate.hasKey(BLACKLIST_PREFIX + token);
+            Boolean isTokenBlacklisted = redisTemplate.hasKey(SecurityConstants.BLACKLIST_PREFIX + token);
 
             if (Boolean.TRUE.equals(isTokenBlacklisted)) {
                 logger.info("Token is already blacklisted: {}", token);
-                return;  // Exit early if token is already blocklisted
+                return;  // Exit early if token is already blacklisted
             }
 
             long tokenExpiryDuration = getTokenExpiryDuration(token);
-            redisTemplate.opsForValue().set(BLACKLIST_PREFIX + token, token);
-            redisTemplate.expire(BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(SecurityConstants.BLACKLIST_PREFIX + token, token);
+            redisTemplate.expire(SecurityConstants.BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
             logger.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
         } else {
             logger.warn("Invalid token provided for invalidation.");
@@ -63,7 +56,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public boolean isTokenBlacklisted(String token) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + token));
+        return Boolean.TRUE.equals(redisTemplate.hasKey(SecurityConstants.BLACKLIST_PREFIX + token));
     }
 
     @Override
