@@ -2,6 +2,7 @@ package com.jack.userservice.service.impl;
 
 import com.jack.common.constants.ErrorCode;
 import com.jack.common.constants.ErrorPath;
+import com.jack.common.constants.TransactionConstants;
 import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.request.OutboxRequestDto;
@@ -12,6 +13,7 @@ import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.client.OutboxServiceClient;
+import com.jack.userservice.client.WalletBalanceRequestSender;
 import com.jack.userservice.client.WalletServiceClient;
 import com.jack.userservice.dto.UsersDto;
 import com.jack.userservice.entity.Users;
@@ -25,8 +27,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.jack.common.constants.EventStatus.PENDING;
 
@@ -41,6 +45,8 @@ public class UserServiceImpl implements UserService {
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
     private final OutboxServiceClient outboxServiceClient;
     private final WalletServiceClient walletServiceClient;
+    private final WalletBalanceRequestSender walletBalanceRequestSender;
+
 
     @Override
     public UserResponseDto register(UserRegistrationRequestDto registrationDto) {
@@ -141,40 +147,38 @@ public class UserServiceImpl implements UserService {
                 ));
 
         UsersDto usersDTO = usersMapper.toDto(user);
-
         String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + userId;
-        WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
 
+        // Step 1: Try getting balance from Redis cache first
+        WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
         if (cachedBalance != null) {
             logger.info("Returning balance from Redis for user ID: {}", userId);
             usersDTO.setUsdBalance(cachedBalance.getUsdBalance());
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
-        } else {
-            logger.warn("Balance not found in Redis for user ID: {}. Requesting from wallet-service...", userId);
-
-            // Request the balance from wallet-service via Feign client (WalletServiceClient)
-            try {
-                WalletResponseDto walletBalance = walletServiceClient.getWalletBalance(userId); // Assuming this method exists in the WalletServiceClient
-
-                // Update the DTO with the fetched balances
-                usersDTO.setUsdBalance(walletBalance.getUsdBalance());
-                usersDTO.setBtcBalance(walletBalance.getBtcBalance());
-
-                // Cache the balance in Redis for future use
-                redisTemplate.opsForValue().set(cacheKey, walletBalance);
-                logger.info("Balance for user ID {} cached in Redis.", userId);
-
-            } catch (Exception e) {
-                logger.error("Error while fetching wallet balance from wallet-service for user ID {}: {}", userId, e.getMessage());
-                throw new CustomErrorException(
-                        ErrorCode.WALLET_SERVICE_ERROR.getHttpStatus(),
-                        ErrorCode.WALLET_SERVICE_ERROR.getMessage(),
-                        ErrorPath.GET_WALLET_BALANCE_API.getPath() + userId
-                );
-            }
+            return usersDTO;
         }
 
-        return usersDTO;
+        // Step 2: If not in cache, try fetching from wallet-service via Feign
+        try {
+            WalletResponseDto walletBalance = walletServiceClient.getWalletBalance(userId);
+            usersDTO.setUsdBalance(walletBalance.getUsdBalance());
+            usersDTO.setBtcBalance(walletBalance.getBtcBalance());
+
+            // Cache the balance in Redis for future requests
+            redisTemplate.opsForValue().set(cacheKey, walletBalance, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);
+            logger.info("Balance for user ID {} cached in Redis.", userId);
+            return usersDTO;
+        } catch (Exception e) {
+            logger.warn("Feign call failed for user ID {}. Sending async request to wallet-service via RabbitMQ.", userId);
+
+            // Step 3: If Feign fails, send balance request asynchronously via RabbitMQ
+            walletBalanceRequestSender.sendBalanceRequest(userId);
+
+            // Optionally, return partial data and wait for the async response to arrive
+            usersDTO.setUsdBalance(BigDecimal.ZERO);  // Default/fallback values
+            usersDTO.setBtcBalance(BigDecimal.ZERO);
+            return usersDTO;
+        }
     }
 
     private Users findUserById(Long id) {
