@@ -2,6 +2,7 @@ package com.jack.outboxservice.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.common.constants.EventStatus;
+import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.common.dto.response.WalletUpdateMessageDto;
 import com.jack.outboxservice.dto.OutboxDto;
@@ -12,7 +13,6 @@ import com.jack.outboxservice.service.OutboxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -27,9 +27,6 @@ public class OutboxServiceImpl implements OutboxService {
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
-
-    @Value("${app.wallet.queue.update}")
-    private String walletUpdateQueue;
 
     public OutboxServiceImpl(OutboxRepository outboxRepository, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
         this.outboxRepository = outboxRepository;
@@ -67,8 +64,8 @@ public class OutboxServiceImpl implements OutboxService {
                     // Deserialize the message payload into WalletCreationMessage
                     WalletCreateMessageDto message = objectMapper.readValue(outbox.getPayload(), WalletCreateMessageDto.class);
 
-                    // Send the message to RabbitMQ
-                    rabbitTemplate.convertAndSend(outbox.getRoutingKey(), message);
+                    // Send the message to RabbitMQ using the routing key from constants
+                    rabbitTemplate.convertAndSend(WalletConstants.WALLET_CREATE_ROUTING_KEY, message);
 
                     // Mark the message as processed
                     outbox.setStatus(EventStatus.PROCESSED);  // Update status
@@ -88,7 +85,7 @@ public class OutboxServiceImpl implements OutboxService {
         try {
             Outbox outbox = Outbox.builder()
                     .eventType("WALLET_UPDATE")
-                    .routingKey(walletUpdateQueue)
+                    .routingKey(WalletConstants.WALLET_UPDATE_ROUTING_KEY)  // Use constant for routing key
                     .payload(objectMapper.writeValueAsString(new WalletUpdateMessageDto(userId, btcAmount, usdAmount)))
                     .createdAt(LocalDateTime.now())
                     .status(EventStatus.PENDING)
