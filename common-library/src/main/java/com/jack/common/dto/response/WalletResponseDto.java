@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
 public class WalletResponseDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

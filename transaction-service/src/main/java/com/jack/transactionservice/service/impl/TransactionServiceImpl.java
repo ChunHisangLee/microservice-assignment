@@ -88,7 +88,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private BigDecimal calculateNewUsdBalance(BigDecimal usdBalanceBefore, BigDecimal btcAmount, TransactionType transactionType) {
-        BigDecimal btcPrice = BigDecimal.valueOf(getCurrentBtcPrice());  // Fetch BTC price from Redis
+        BigDecimal btcPrice = getCurrentBtcPrice();  // Fetch BTC price from Redis
         if (transactionType == TransactionType.BUY) {
             return usdBalanceBefore.subtract(btcAmount.multiply(btcPrice));
         } else {
@@ -119,16 +119,17 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    private double getCurrentBtcPrice() {
+    private BigDecimal getCurrentBtcPrice() {
         String priceStr = redisTemplate.opsForValue().get(btcPriceKey);
         return Optional.ofNullable(priceStr)
                 .map(this::parsePrice)
                 .orElseThrow(() -> new IllegalStateException("BTC price not found in Redis"));
     }
 
-    private double parsePrice(String priceStr) {
+    private BigDecimal parsePrice(String priceStr) {
         try {
-            return Double.parseDouble(priceStr);
+            System.out.println("Parsing BTC price string: " + priceStr);  // Debugging line
+            return new BigDecimal(priceStr);
         } catch (NumberFormatException e) {
             throw new IllegalStateException("Failed to parse BTC price from Redis: " + e.getMessage(), e);
         }

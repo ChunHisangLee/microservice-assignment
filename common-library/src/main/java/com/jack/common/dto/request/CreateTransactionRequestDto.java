@@ -1,5 +1,6 @@
 package com.jack.common.dto.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
 public class CreateTransactionRequestDto {
     private Long userId;
     private BigDecimal btcAmount;

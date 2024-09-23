@@ -1,10 +1,11 @@
 package com.jack.common.dto.request;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @Builder
+@AllArgsConstructor
 public class OutboxRequestDto {
     private Long aggregateId;
     private String aggregateType;

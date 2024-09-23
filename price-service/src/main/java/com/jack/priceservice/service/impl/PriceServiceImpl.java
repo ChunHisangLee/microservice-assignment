@@ -1,5 +1,8 @@
 package com.jack.priceservice.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.priceservice.schedule.ScheduledTasks;
 import com.jack.priceservice.service.PriceService;
 import org.slf4j.Logger;
@@ -15,47 +18,50 @@ import java.time.Duration;
 public class PriceServiceImpl implements PriceService {
     private static final Logger logger = LoggerFactory.getLogger(PriceServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.redis.btc-price-key:#{T(com.jack.common.constants.ApplicationConstants).BTC_PRICE_KEY}}")
     private String btcPriceKey;
 
-    @Value("${initial.price:#{T(com.jack.common.constants.ApplicationConstants).INITIAL_PRICE}}")
-    private BigDecimal initialPrice;
-
-    public PriceServiceImpl(RedisTemplate<String, String> redisTemplate) {
+    public PriceServiceImpl(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Override
     public BigDecimal getPrice() {
         logger.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);
         // Fetch the price from Redis
-        String priceStr = redisTemplate.opsForValue().get(btcPriceKey);
-        BigDecimal price = null;
+        String priceJson = redisTemplate.opsForValue().get(btcPriceKey);
 
-        if (priceStr != null) {
-            try {
-                price = new BigDecimal(priceStr);
-                logger.info("Current BTC price retrieved from Redis: {}", price);
-            } catch (NumberFormatException e) {
-                logger.error("Failed to convert price from Redis to BigDecimal: {}", priceStr, e);
-            }
-        } else {
-            logger.warn("BTC price not found in Redis. Falling back to initial price: {}", initialPrice);
+        try {
+            // Convert the JSON string back to a DTO
+            BTCPriceResponseDto priceResponseDto = objectMapper.readValue(priceJson, BTCPriceResponseDto.class);
+            return priceResponseDto.getBtcPrice();
+        } catch (Exception e) {
+            logger.error("Error deserializing BTCPriceResponseDto from JSON", e);
+            return null;
         }
-
-        return price != null ? price : initialPrice;
     }
 
     @Override
-    public void setPrice(BigDecimal price) {
+    public void setPriceWithId(Long id, BigDecimal price) {
         if (price == null) {
             logger.warn("Attempted to set null price in Redis.");
             return;
         }
 
-        logger.info("Setting current BTC price in Redis with key: {} to value: {}", btcPriceKey, price);
-        redisTemplate.opsForValue().set(btcPriceKey, String.valueOf(price), Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
-        logger.info("BTC price set successfully in Redis.");
+        try {
+            BTCPriceResponseDto dto = BTCPriceResponseDto.builder()
+                    .id(id)
+                    .btcPrice(price)
+                    .build();
+
+            String priceJson = objectMapper.writeValueAsString(dto);
+            redisTemplate.opsForValue().set(btcPriceKey, priceJson, Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
+            logger.info("Set price with ID in Redis: {}", priceJson);
+        } catch (JsonProcessingException e) {
+            logger.error("Error serializing BTC price data", e);
+        }
     }
 }

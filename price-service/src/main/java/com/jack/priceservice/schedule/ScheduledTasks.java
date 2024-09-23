@@ -1,5 +1,6 @@
 package com.jack.priceservice.schedule;
 
+import com.jack.common.constants.ApplicationConstants;
 import com.jack.priceservice.entity.BTCPriceHistory;
 import com.jack.priceservice.repository.BTCPriceHistoryRepository;
 import com.jack.priceservice.service.PriceService;
@@ -21,8 +22,7 @@ public class ScheduledTasks {
     public static final int SCHEDULE_RATE_MS = 5 * 1000;
 
     private boolean isIncreasing = true;
-
-    private double currentPrice = MIN_PRICE;
+    private double currentPrice = ApplicationConstants.INITIAL_PRICE;
 
     private final PriceService priceService;
     private final BTCPriceHistoryRepository btcPriceHistoryRepository;
@@ -34,40 +34,46 @@ public class ScheduledTasks {
 
     @PostConstruct
     protected void saveInitialPrice() {
-        priceService.setPrice(BigDecimal.valueOf(currentPrice));
-
+        // Create and save the initial BTCPriceHistory entity
         BTCPriceHistory initialPriceHistory = new BTCPriceHistory();
         initialPriceHistory.setPrice(BigDecimal.valueOf(currentPrice));
         initialPriceHistory.setTimestamp(LocalDateTime.now());
-        btcPriceHistoryRepository.save(initialPriceHistory);
+        BTCPriceHistory savedInitialPrice = btcPriceHistoryRepository.save(initialPriceHistory);
 
-        log.info("Saved initial BTC Price to Redis and database: {}", currentPrice);
+        // Save the price to Redis with the btchistoryID
+        priceService.setPriceWithId(savedInitialPrice.getId(), BigDecimal.valueOf(currentPrice));
+
+        log.info("Saved initial BTC Price to Redis and database: ID={}, Price={}",
+                savedInitialPrice.getId(), currentPrice);
     }
 
     @Scheduled(fixedRate = SCHEDULE_RATE_MS)
     public void updateCurrentPrice() {
+        // Update the current price based on the increasing flag
         if (isIncreasing) {
             currentPrice += PRICE_INCREMENT;
-
             if (currentPrice >= MAX_PRICE) {
                 isIncreasing = false;
             }
         } else {
             currentPrice -= PRICE_INCREMENT;
-
             if (currentPrice <= MIN_PRICE) {
                 isIncreasing = true;
             }
         }
 
         log.info("Updated BTC Price: {}", currentPrice);
-        // Save the updated price to Redis
-        priceService.setPrice(BigDecimal.valueOf(currentPrice));
-        // Save the updated price to the database
+
+        // Create and save the new BTCPriceHistory entity
         BTCPriceHistory priceHistory = new BTCPriceHistory();
         priceHistory.setPrice(BigDecimal.valueOf(currentPrice));
         priceHistory.setTimestamp(LocalDateTime.now());
-        btcPriceHistoryRepository.save(priceHistory);
-        log.info("Saved updated BTC Price to Redis and database: {}", currentPrice);
+        BTCPriceHistory savedPriceHistory = btcPriceHistoryRepository.save(priceHistory);
+
+        // Save the updated price to Redis with the btchistoryID
+        priceService.setPriceWithId(savedPriceHistory.getId(), BigDecimal.valueOf(currentPrice));
+
+        log.info("Saved updated BTC Price to Redis and database: ID={}, Price={}",
+                savedPriceHistory.getId(), currentPrice);
     }
 }
