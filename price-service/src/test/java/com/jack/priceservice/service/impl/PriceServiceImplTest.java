@@ -98,8 +98,8 @@ class PriceServiceImplTest {
         // Act
         BigDecimal result = priceService.getPrice();
 
-        // Assert
-        assertNull(result);
+        // Assert that null is returned when JSON deserialization fails
+        assertNull(result, "Expected null when deserialization fails due to invalid JSON.");
 
         verify(valueOperations, times(1)).get(btcPriceKey);
         verify(objectMapper, times(1)).readValue(invalidJson, BTCPriceResponseDto.class);
@@ -111,12 +111,6 @@ class PriceServiceImplTest {
         Long id = 42L;
         BigDecimal price = new BigDecimal("6543.21");
         String btcPriceKey = "BTCPrice:";  // Ensure this key matches the field in PriceServiceImpl
-
-        BTCPriceResponseDto dto = BTCPriceResponseDto.builder()
-                .id(id)
-                .btcPrice(price)
-                .build();
-
         String dtoJson = "{\"id\":42,\"btcPrice\":6543.21}";
 
         // Use any(BTCPriceResponseDto.class) to match the object more flexibly

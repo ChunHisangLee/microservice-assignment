@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -32,11 +33,17 @@ public class PriceServiceImpl implements PriceService {
     public BigDecimal getPrice() {
         logger.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);
         // Fetch the price from Redis
-        String priceJson = redisTemplate.opsForValue().get(btcPriceKey);
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        String json = valueOperations.get(btcPriceKey);
+
+        if (json == null) {
+            logger.warn("No data found in Redis for key: {}", btcPriceKey);
+            return null;
+        }
 
         try {
             // Convert the JSON string back to a DTO
-            BTCPriceResponseDto priceResponseDto = objectMapper.readValue(priceJson, BTCPriceResponseDto.class);
+            BTCPriceResponseDto priceResponseDto = objectMapper.readValue(json, BTCPriceResponseDto.class);
             return priceResponseDto.getBtcPrice();
         } catch (Exception e) {
             logger.error("Error deserializing BTCPriceResponseDto from JSON", e);
