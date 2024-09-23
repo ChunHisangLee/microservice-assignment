@@ -1,6 +1,7 @@
 package com.jack.transactionservice.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jack.common.dto.request.CreateTransactionRequestDto;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.entity.TransactionType;
@@ -30,7 +31,7 @@ public class TransactionController {
     }
 
     @PostMapping("/buy")
-    public ResponseEntity<TransactionDto> buyBtc(@RequestBody CreateTransactionRequestDto request) {
+    public ResponseEntity<TransactionDto> buyBtc(@RequestBody CreateTransactionRequestDto request) throws JsonProcessingException {
         logger.info("Initiating BTC buy transaction for user ID: {}", request.getUserId());
         TransactionDto transactionDTO = transactionService.createTransaction(request, TransactionType.BUY);
         logger.info("BTC buy transaction completed for user ID: {}", request.getUserId());
@@ -38,7 +39,7 @@ public class TransactionController {
     }
 
     @PostMapping("/sell")
-    public ResponseEntity<TransactionDto> sellBtc(@RequestBody CreateTransactionRequestDto request) {
+    public ResponseEntity<TransactionDto> sellBtc(@RequestBody CreateTransactionRequestDto request) throws JsonProcessingException {
         logger.info("Initiating BTC sell transaction for user ID: {}", request.getUserId());
         TransactionDto transactionDTO = transactionService.createTransaction(request, TransactionType.SELL);
         logger.info("BTC sell transaction completed for user ID: {}", request.getUserId());

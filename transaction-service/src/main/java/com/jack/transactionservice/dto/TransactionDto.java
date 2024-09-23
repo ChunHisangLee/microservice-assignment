@@ -1,9 +1,7 @@
 package com.jack.transactionservice.dto;
 
 import com.jack.transactionservice.entity.TransactionType;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,6 +9,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TransactionDto {
     private Long id;
     private Long userId;
