@@ -2,7 +2,6 @@ package com.jack.authservice.service.impl;
 
 import com.jack.authservice.client.UserServiceClient;
 import com.jack.authservice.security.JwtTokenProvider;
-import com.jack.authservice.service.AuthService;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
 import org.junit.jupiter.api.BeforeEach;
