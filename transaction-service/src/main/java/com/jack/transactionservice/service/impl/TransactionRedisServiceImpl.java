@@ -2,9 +2,10 @@ package com.jack.transactionservice.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jack.common.constants.TransactionConstants;
+import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.service.TransactionRedisService;
-import com.jack.common.constants.TransactionConstants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class TransactionRedisServiceImpl implements TransactionRedisService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionRedisServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     // Use constant with fallback to config property
     @Value("${app.transaction.cache-prefix:" + TransactionConstants.TRANSACTION_CACHE_PREFIX + "}")
@@ -53,10 +54,10 @@ public class TransactionRedisServiceImpl implements TransactionRedisService {
     }
 
     @Override
-    public void deleteTransactionFromRedis(Long transactionId) {
-        String redisKey = cachePrefix + transactionId;
-        redisTemplate.delete(redisKey);
-        logger.info("Transaction with ID {} has been removed from Redis for key: {}", transactionId, redisKey);
+    public String getBTCPriceFromRedis(String btcPriceKey) {
+        String btcPriceStr = redisTemplate.opsForValue().get(btcPriceKey);
+        logger.info("Fetching BTC price from Redis with key: {}", btcPriceKey);
+        return btcPriceStr;
     }
 
     private TransactionDto deserializeTransaction(String transactionJson) {

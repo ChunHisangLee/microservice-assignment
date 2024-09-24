@@ -10,4 +10,6 @@ public interface TransactionService {
     TransactionDto createTransaction(CreateTransactionRequestDto request, TransactionType transactionType);
 
     Page<TransactionDto> getUserTransactionHistory(Long userId, Pageable pageable);
+
+    TransactionDto getTransactionById(Long transactionId);
 }

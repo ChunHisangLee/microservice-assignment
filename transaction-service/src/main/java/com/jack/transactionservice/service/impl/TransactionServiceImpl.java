@@ -1,10 +1,7 @@
 package com.jack.transactionservice.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jack.common.constants.ApplicationConstants;
-import com.jack.common.constants.TransactionConstants;
 import com.jack.common.dto.request.CreateTransactionRequestDto;
 import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.common.dto.response.WalletResponseDto;
@@ -15,46 +12,31 @@ import com.jack.transactionservice.entity.Transaction;
 import com.jack.transactionservice.entity.TransactionType;
 import com.jack.transactionservice.mapper.TransactionMapper;
 import com.jack.transactionservice.repository.TransactionRepository;
+import com.jack.transactionservice.service.TransactionRedisService;
 import com.jack.transactionservice.service.TransactionService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
-    private static final Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);  // Logger added
+    private static final Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);
+
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final OutboxClient outboxClient;
     private final WalletServiceClient walletServiceClient;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final TransactionRedisService transactionRedisService;
     private final ObjectMapper objectMapper;
-
-    public TransactionServiceImpl(TransactionRepository transactionRepository,
-                                  TransactionMapper transactionMapper,
-                                  OutboxClient outboxClient,
-                                  WalletServiceClient walletServiceClient,
-                                  RedisTemplate<String, String> redisTemplate) {
-        this.transactionRepository = transactionRepository;
-        this.transactionMapper = transactionMapper;
-        this.outboxClient = outboxClient;
-        this.walletServiceClient = walletServiceClient;
-        this.redisTemplate = redisTemplate;
-
-        // Configure the ObjectMapper to handle Java 8 date/time types
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // To write ISO-8601 formatted dates
-    }
 
     @Override
     @Transactional
@@ -101,7 +83,7 @@ public class TransactionServiceImpl implements TransactionService {
         // Step 8: Call the WalletService to update the user's wallet balances
         walletServiceClient.updateWalletBalance(request.getUserId(), newUsdBalance, newBtcBalance);
 
-        // Step 9: Cache the transaction data in Redis
+        // Step 9: Cache the transaction data in Redis via TransactionRedisService
         cacheTransaction(transaction);
 
         // Step 10: Return the transaction response DTO
@@ -109,26 +91,41 @@ public class TransactionServiceImpl implements TransactionService {
                 currentBalances.getBtcBalance(), newUsdBalance, newBtcBalance);
     }
 
-
     @Override
     public Page<TransactionDto> getUserTransactionHistory(Long userId, Pageable pageable) {
-        logger.info("Fetching transaction history for user: {}", userId);  // Log fetching transaction history
+        logger.info("Fetching transaction history for user: {}", userId);
         return transactionRepository.findByUserId(userId, pageable)
-                .map(transaction -> transactionMapper.toDto(transaction, BigDecimal.valueOf(0.0), BigDecimal.valueOf(0.0), BigDecimal.valueOf(0.0), BigDecimal.valueOf(0.0)));
+                .map(transaction -> transactionMapper.toDto(transaction, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+    }
+
+    @Override
+    public TransactionDto getTransactionById(Long transactionId) {
+        logger.info("Retrieving transaction with ID: {}", transactionId);
+        // Attempt to retrieve from cache first
+        TransactionDto cachedTransaction = transactionRedisService.getTransactionFromRedis(transactionId);
+        if (cachedTransaction != null) {
+            logger.info("Transaction with ID {} retrieved from cache", transactionId);
+            return cachedTransaction;
+        }
+
+        // If not in cache, retrieve from database
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalStateException("Transaction not found with ID: " + transactionId));
+
+        // Map to DTO
+        TransactionDto transactionDto = transactionMapper.toDto(transaction, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+
+        // Cache the retrieved transaction for future requests
+        transactionRedisService.saveTransactionToRedis(transactionDto);
+        logger.info("Transaction with ID {} has been cached after retrieval from DB", transactionId);
+
+        return transactionDto;
     }
 
     private void cacheTransaction(Transaction transaction) {
-        String redisKey = TransactionConstants.TRANSACTION_CACHE_PREFIX + transaction.getId();
-
-        try {
-            // Serialize a transaction object to JSON for caching
-            String transactionJson = objectMapper.writeValueAsString(transaction);
-            redisTemplate.opsForValue().set(redisKey, transactionJson, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);  // Use constant TTL
-            logger.info("Transaction cached with ID: {}", transaction.getId());  // Log caching success
-        } catch (Exception e) {
-            logger.error("Failed to serialize Transaction to cache: {}", e.getMessage());  // Log error
-            throw new IllegalStateException("Failed to serialize Transaction to cache: " + e.getMessage(), e);
-        }
+        TransactionDto transactionDto = transactionMapper.toDto(transaction, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        transactionRedisService.saveTransactionToRedis(transactionDto);
+        logger.info("Transaction with ID {} has been cached successfully.", transaction.getId());
     }
 
     private BigDecimal calculateNewUsdBalance(BigDecimal usdBalanceBefore, BigDecimal btcAmount, TransactionType transactionType, BigDecimal btcPrice) {
@@ -142,7 +139,6 @@ public class TransactionServiceImpl implements TransactionService {
             throw new IllegalArgumentException("Unsupported Transaction Type: " + transactionType);
         }
     }
-
 
     private BigDecimal calculateNewBtcBalance(BigDecimal btcBalanceBefore, BigDecimal btcAmount, TransactionType transactionType) {
         if (transactionType == TransactionType.BUY) {
@@ -166,9 +162,8 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BTCPriceResponseDto getCurrentBTCPriceFromRedis() {
         String btcPriceKey = ApplicationConstants.BTC_PRICE_KEY;
-        String btcPriceStr = redisTemplate.opsForValue().get(btcPriceKey);
-        logger.info("Fetching BTC price from Redis with key: {}", btcPriceKey);  // Log Redis fetch operation
-
+        logger.info("Fetching BTC price from Redis with key: {}", btcPriceKey);
+        String btcPriceStr = transactionRedisService.getBTCPriceFromRedis(btcPriceKey);
         return Optional.ofNullable(btcPriceStr)
                 .map(this::parseBTCPriceResponse)
                 .orElseThrow(() -> new IllegalStateException("BTC price not found in Redis"));
@@ -176,10 +171,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BTCPriceResponseDto parseBTCPriceResponse(String btcPriceStr) {
         try {
-            logger.info("Parsing BTC price response string: {}", btcPriceStr);  // Log BTC price parsing
+            logger.info("Parsing BTC price response string: {}", btcPriceStr);
             return objectMapper.readValue(btcPriceStr, BTCPriceResponseDto.class);
         } catch (Exception e) {
-            logger.error("Error deserializing BTCPriceResponseDto from JSON: {}", e.getMessage());  // Log error
+            logger.error("Error deserializing BTCPriceResponseDto from JSON: {}", e.getMessage());
             throw new IllegalStateException("Failed to parse BTC price from Redis: " + e.getMessage(), e);
         }
     }

@@ -48,14 +48,14 @@ class TransactionRedisServiceImplTest {
                 .id(1L)
                 .userId(100L)
                 .btcPriceHistoryId(200L)
-                .btcAmount(new BigDecimal("0.5"))
-                .usdAmount(new BigDecimal("25000.00"))
+                .btcAmount(BigDecimal.valueOf(0.5))
+                .usdAmount(BigDecimal.valueOf(25000.00))
                 .transactionTime(LocalDateTime.now())
                 .transactionType(TransactionType.BUY)
-                .usdBalanceBefore(new BigDecimal("10000.00"))
-                .btcBalanceBefore(new BigDecimal("1.0"))
-                .usdBalanceAfter(new BigDecimal("7500.00"))
-                .btcBalanceAfter(new BigDecimal("1.5"))
+                .usdBalanceBefore(BigDecimal.valueOf(10000.00))
+                .btcBalanceBefore(BigDecimal.valueOf(1.0))
+                .usdBalanceAfter(BigDecimal.valueOf(7500.00))
+                .btcBalanceAfter(BigDecimal.valueOf(1.5))
                 .build();
 
         // Leniently mock the RedisTemplate to return the mocked ValueOperations
@@ -174,33 +174,6 @@ class TransactionRedisServiceImplTest {
     }
 
     @Test
-    void deleteTransactionFromRedis_ShouldDeleteTransactionSuccessfully() {
-        // Arrange
-        String expectedKey = CACHE_PREFIX + sampleTransaction.getId();
-        when(redisTemplate.delete(expectedKey)).thenReturn(true);
-
-        // Act
-        transactionRedisService.deleteTransactionFromRedis(sampleTransaction.getId());
-
-        // Assert
-        verify(redisTemplate, times(1)).delete(expectedKey);
-    }
-
-    @Test
-    void deleteTransactionFromRedis_ShouldHandleNonExistingTransaction() {
-        // Arrange
-        String expectedKey = CACHE_PREFIX + sampleTransaction.getId();
-        when(redisTemplate.delete(expectedKey)).thenReturn(false); // Indicates nothing was deleted
-
-        // Act
-        transactionRedisService.deleteTransactionFromRedis(sampleTransaction.getId());
-
-        // Assert
-        verify(redisTemplate, times(1)).delete(expectedKey);
-        // Optionally, you can verify logging or other behaviors if necessary
-    }
-
-    @Test
     void saveTransactionToRedis_ShouldHandleNullTransactionDto() {
         // Act & Assert
         assertThrows(NullPointerException.class, () -> transactionRedisService.saveTransactionToRedis(null),
@@ -222,18 +195,5 @@ class TransactionRedisServiceImplTest {
         assertNull(retrievedTransaction, "Retrieved transaction should be null when transactionId is null");
         verify(valueOperations, times(1)).get(expectedKey);
         verify(objectMapper, never()).readValue(anyString(), eq(TransactionDto.class));
-    }
-
-    @Test
-    void deleteTransactionFromRedis_ShouldHandleNullTransactionId() {
-        // Arrange
-        String expectedKey = CACHE_PREFIX + null;
-        when(redisTemplate.delete(expectedKey)).thenReturn(false);
-
-        // Act
-        transactionRedisService.deleteTransactionFromRedis(null);
-
-        // Assert
-        verify(redisTemplate, times(1)).delete(expectedKey);
     }
 }

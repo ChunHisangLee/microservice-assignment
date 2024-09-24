@@ -1,5 +1,6 @@
 package com.jack.transactionservice.service;
 
+import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.transactionservice.dto.TransactionDto;
 
 public interface TransactionRedisService {
@@ -7,5 +8,5 @@ public interface TransactionRedisService {
 
     TransactionDto getTransactionFromRedis(Long transactionId);
 
-    void deleteTransactionFromRedis(Long transactionId);
+    String getBTCPriceFromRedis(String btcPriceKey);
 }

@@ -31,7 +31,7 @@ public class TransactionController {
     }
 
     @PostMapping("/buy")
-    public ResponseEntity<TransactionDto> buyBtc(@RequestBody CreateTransactionRequestDto request) throws JsonProcessingException {
+    public ResponseEntity<TransactionDto> buyBtc(@RequestBody CreateTransactionRequestDto request) {
         logger.info("Initiating BTC buy transaction for user ID: {}", request.getUserId());
         TransactionDto transactionDTO = transactionService.createTransaction(request, TransactionType.BUY);
         logger.info("BTC buy transaction completed for user ID: {}", request.getUserId());
@@ -39,7 +39,7 @@ public class TransactionController {
     }
 
     @PostMapping("/sell")
-    public ResponseEntity<TransactionDto> sellBtc(@RequestBody CreateTransactionRequestDto request) throws JsonProcessingException {
+    public ResponseEntity<TransactionDto> sellBtc(@RequestBody CreateTransactionRequestDto request) {
         logger.info("Initiating BTC sell transaction for user ID: {}", request.getUserId());
         TransactionDto transactionDTO = transactionService.createTransaction(request, TransactionType.SELL);
         logger.info("BTC sell transaction completed for user ID: {}", request.getUserId());
@@ -57,27 +57,5 @@ public class TransactionController {
         Page<TransactionDto> transactions = transactionService.getUserTransactionHistory(userId, pageable);
         logger.info("Fetched {} transactions for user ID: {}", transactions.getTotalElements(), userId);
         return ResponseEntity.ok(transactions);
-    }
-
-    @PostMapping("/cache")
-    public ResponseEntity<String> cacheTransaction(@RequestBody TransactionDto transactionDto) {
-        transactionRedisService.saveTransactionToRedis(transactionDto);
-        return ResponseEntity.ok("Transaction cached successfully.");
-    }
-
-    @GetMapping("/cache/{transactionId}")
-    public ResponseEntity<TransactionDto> getCachedTransaction(@PathVariable Long transactionId) {
-        TransactionDto cachedTransaction = transactionRedisService.getTransactionFromRedis(transactionId);
-        if (cachedTransaction != null) {
-            return ResponseEntity.ok(cachedTransaction);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @DeleteMapping("/cache/{transactionId}")
-    public ResponseEntity<String> deleteCachedTransaction(@PathVariable Long transactionId) {
-        transactionRedisService.deleteTransactionFromRedis(transactionId);
-        return ResponseEntity.ok("Transaction deleted from Redis.");
     }
 }
