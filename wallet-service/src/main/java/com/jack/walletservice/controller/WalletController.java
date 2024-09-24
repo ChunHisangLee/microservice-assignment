@@ -17,7 +17,7 @@ public class WalletController {
 
     // Update wallet balances
     @PutMapping("/{userId}")
-    public ResponseEntity<Void> updateWallet(@PathVariable Long userId,
+    public ResponseEntity<Void> updateWalletBalance(@PathVariable Long userId,
                                              @RequestParam("usdBalance") BigDecimal usdBalance,
                                              @RequestParam("btcBalance") BigDecimal btcBalance) {
         walletService.updateWallet(userId, usdBalance, btcBalance);
@@ -25,7 +25,7 @@ public class WalletController {
     }
 
     // Get wallet balance by userId
-    @GetMapping("/{userId}")
+    @GetMapping("/{userId}/balances")
     public ResponseEntity<WalletResponseDto> getWalletBalance(@PathVariable Long userId) {
         WalletResponseDto walletResponseDto = walletService.getWalletBalance(userId);
         return ResponseEntity.ok(walletResponseDto);
