@@ -1,11 +1,9 @@
 package com.jack.transactionservice.controller;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jack.common.dto.request.CreateTransactionRequestDto;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.entity.TransactionType;
-import com.jack.transactionservice.service.TransactionRedisService;
 import com.jack.transactionservice.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +21,9 @@ import static com.jack.common.constants.ApplicationConstants.DEFAULT_PAGE_SIZE;
 public class TransactionController {
     private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
     private final TransactionService transactionService;
-    private final TransactionRedisService transactionRedisService;
 
-    public TransactionController(TransactionService transactionService, TransactionRedisService transactionRedisService) {
+    public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
-        this.transactionRedisService = transactionRedisService;
     }
 
     @PostMapping("/buy")

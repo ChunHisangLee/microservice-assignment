@@ -3,7 +3,6 @@ package com.jack.transactionservice.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.common.constants.TransactionConstants;
-import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.service.TransactionRedisService;
 import lombok.RequiredArgsConstructor;

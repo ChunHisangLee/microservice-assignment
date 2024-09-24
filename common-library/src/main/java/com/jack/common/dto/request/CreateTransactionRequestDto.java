@@ -10,12 +10,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateTransactionRequestDto {
-    public enum TransactionType {
-        BUY,
-        SELL
-    }
-
     private Long userId;
     private BigDecimal btcAmount;
-    private TransactionType transactionType;
 }
