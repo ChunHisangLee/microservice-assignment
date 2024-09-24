@@ -10,30 +10,13 @@ import java.math.BigDecimal;
 
 @Mapper(componentModel = "spring")
 public interface TransactionMapper {
-
     TransactionMapper INSTANCE = Mappers.getMapper(TransactionMapper.class);
 
-    // Map Transaction entity to TransactionDto with additional balances
-    @Mapping(source = "transaction.id", target = "id")
-    @Mapping(source = "transaction.userId", target = "userId")
-    @Mapping(source = "transaction.btcPriceHistoryId", target = "btcPriceHistoryId")
-    @Mapping(source = "transaction.btcAmount", target = "btcAmount")
-    @Mapping(source = "transaction.usdAmount", target = "usdAmount")
-    @Mapping(source = "transaction.transactionTime", target = "transactionTime")
-    @Mapping(source = "transaction.transactionType", target = "transactionType")
     @Mapping(source = "usdBalanceBefore", target = "usdBalanceBefore")
     @Mapping(source = "btcBalanceBefore", target = "btcBalanceBefore")
-    @Mapping(source = "usdBalanceAfter", target = "usdBalanceAfter")
-    @Mapping(source = "btcBalanceAfter", target = "btcBalanceAfter")
-    TransactionDto toDto(Transaction transaction, BigDecimal usdBalanceBefore, BigDecimal btcBalanceBefore, BigDecimal usdBalanceAfter, BigDecimal btcBalanceAfter);
-
-    // Map TransactionDto to Transaction entity (exclude balance fields)
-    @Mapping(source = "transactionDto.id", target = "id")
-    @Mapping(source = "transactionDto.userId", target = "userId")
-    @Mapping(source = "transactionDto.btcPriceHistoryId", target = "btcPriceHistoryId")
-    @Mapping(source = "transactionDto.btcAmount", target = "btcAmount")
-    @Mapping(source = "transactionDto.usdAmount", target = "usdAmount")
-    @Mapping(source = "transactionDto.transactionTime", target = "transactionTime")
-    @Mapping(source = "transactionDto.transactionType", target = "transactionType")
-    Transaction toEntity(TransactionDto transactionDto);
+    @Mapping(source = "newUsdBalance", target = "usdBalanceAfter")
+    @Mapping(source = "newBtcBalance", target = "btcBalanceAfter")
+    TransactionDto toDto(Transaction transaction, BigDecimal usdBalanceBefore,
+                         BigDecimal btcBalanceBefore, BigDecimal newUsdBalance,
+                         BigDecimal newBtcBalance);
 }

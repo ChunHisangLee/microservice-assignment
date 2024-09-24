@@ -7,6 +7,7 @@ import com.jack.common.constants.ApplicationConstants;
 import com.jack.common.constants.TransactionConstants;
 import com.jack.common.dto.request.CreateTransactionRequestDto;
 import com.jack.common.dto.response.BTCPriceResponseDto;
+import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.transactionservice.client.OutboxClient;
 import com.jack.transactionservice.client.WalletServiceClient;
 import com.jack.transactionservice.dto.TransactionDto;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,7 +38,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final WalletServiceClient walletServiceClient;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
-    private final String btcPriceKey = ApplicationConstants.BTC_PRICE_KEY;
 
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                                   TransactionMapper transactionMapper,
@@ -56,41 +57,58 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional
     public TransactionDto createTransaction(CreateTransactionRequestDto request, TransactionType transactionType) {
-        logger.info("Creating transaction for user: {}", request.getUserId());  // Log user ID
+        logger.info("Creating transaction for user: {}", request.getUserId());
 
         // Step 1: Fetch BTC price and btcPriceHistoryId from Redis
         BTCPriceResponseDto btcPrice = getCurrentBTCPriceFromRedis();
 
-        // Step 2: Create and save the transaction in the database
+        // Step 2: Fetch user's current wallet balances from WalletService
+        WalletResponseDto currentBalances = walletServiceClient.getWalletBalance(request.getUserId());
+        logger.info("Fetched wallet balances for user {}: USD - {}, BTC - {}", request.getUserId(),
+                currentBalances.getUsdBalance(), currentBalances.getBtcBalance());
+
+        // Step 3: Calculate USD amount based on transaction type
+        BigDecimal usdAmount = calculateUsdAmount(btcPrice.getBtcPrice(), request.getBtcAmount(), transactionType);
+
+        // Step 4: Calculate the updated wallet balances
+        BigDecimal newUsdBalance = calculateNewUsdBalance(currentBalances.getUsdBalance(), request.getBtcAmount(),
+                transactionType, btcPrice.getBtcPrice());
+        BigDecimal newBtcBalance = calculateNewBtcBalance(currentBalances.getBtcBalance(), request.getBtcAmount(),
+                transactionType);
+
+        // Step 5: Validate the new balances
+        validateBalances(newUsdBalance, newBtcBalance);
+
+        // Step 6: Create and save the transaction in the database
         Transaction transaction = Transaction.builder()
                 .userId(request.getUserId())
                 .btcAmount(request.getBtcAmount())
-                .usdAmount(calculateUsdAmount(btcPrice.getBtcPrice(), request.getBtcAmount()))
+                .usdAmount(usdAmount)
                 .btcPriceHistoryId(btcPrice.getId())
                 .transactionType(transactionType)
                 .transactionTime(LocalDateTime.now())
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        logger.info("Transaction created with ID: {}", transaction.getId());  // Log transaction ID
+        logger.info("Transaction created with ID: {}", transaction.getId());
 
-        // Step 3: Publish the event to the outbox service
-        outboxClient.sendTransactionEvent(transaction.getId(), request.getUserId(), transaction.getBtcAmount(), transaction.getUsdAmount());
+        // Step 7: Publish the event to the outbox service
+        outboxClient.sendTransactionEvent(transaction.getId(), request.getUserId(), transaction.getBtcAmount(),
+                transaction.getUsdAmount());
 
-        // Step 4: Calculate the updated wallet balances
-        BigDecimal newUsdBalance = calculateNewUsdBalance(request.getUsdBalanceBefore(), transaction.getBtcAmount(), transactionType);
-        BigDecimal newBtcBalance = calculateNewBtcBalance(request.getBtcBalanceBefore(), transaction.getBtcAmount(), transactionType);
-
-        // Step 5: Call the WalletService to update the user's wallet balances
+        // Step 8: Call the WalletService to update the user's wallet balances
         walletServiceClient.updateWalletBalance(request.getUserId(), newUsdBalance, newBtcBalance);
 
-        // Step 6: Cache the transaction data in Redis
+        // Step 9: Cache the transaction data in Redis
         cacheTransaction(transaction);
 
-        // Step 7: Return the transaction DTO
-        return transactionMapper.toDto(transaction, request.getUsdBalanceBefore(), request.getBtcBalanceBefore(), newUsdBalance, newBtcBalance);
+        // Step 10: Return the transaction response DTO
+        return transactionMapper.toDto(transaction, currentBalances.getUsdBalance(),
+                currentBalances.getBtcBalance(), newUsdBalance, newBtcBalance);
     }
+
 
     @Override
     public Page<TransactionDto> getUserTransactionHistory(Long userId, Pageable pageable) {
@@ -101,6 +119,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void cacheTransaction(Transaction transaction) {
         String redisKey = TransactionConstants.TRANSACTION_CACHE_PREFIX + transaction.getId();
+
         try {
             // Serialize a transaction object to JSON for caching
             String transactionJson = objectMapper.writeValueAsString(transaction);
@@ -112,26 +131,44 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    private BigDecimal calculateNewUsdBalance(BigDecimal usdBalanceBefore, BigDecimal btcAmount, TransactionType transactionType) {
-        BigDecimal btcPrice = getCurrentBtcPrice();  // Fetch BTC price from Redis
+    private BigDecimal calculateNewUsdBalance(BigDecimal usdBalanceBefore, BigDecimal btcAmount, TransactionType transactionType, BigDecimal btcPrice) {
+        BigDecimal usdChange = btcPrice.multiply(btcAmount);
+
         if (transactionType == TransactionType.BUY) {
-            return usdBalanceBefore.subtract(btcAmount.multiply(btcPrice));
+            return usdBalanceBefore.subtract(usdChange);
+        } else if (transactionType == TransactionType.SELL) {
+            return usdBalanceBefore.add(usdChange);
         } else {
-            return usdBalanceBefore.add(btcAmount.multiply(btcPrice));
+            throw new IllegalArgumentException("Unsupported Transaction Type: " + transactionType);
         }
     }
+
 
     private BigDecimal calculateNewBtcBalance(BigDecimal btcBalanceBefore, BigDecimal btcAmount, TransactionType transactionType) {
         if (transactionType == TransactionType.BUY) {
             return btcBalanceBefore.add(btcAmount);
-        } else {
+        } else if (transactionType == TransactionType.SELL) {
             return btcBalanceBefore.subtract(btcAmount);
+        } else {
+            throw new IllegalArgumentException("Unsupported Transaction Type: " + transactionType);
+        }
+    }
+
+    private void validateBalances(BigDecimal usdBalanceAfter, BigDecimal btcBalanceAfter) {
+        if (usdBalanceAfter.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException("Insufficient USD balance for this transaction.");
+        }
+
+        if (btcBalanceAfter.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException("Insufficient BTC balance for this transaction.");
         }
     }
 
     private BTCPriceResponseDto getCurrentBTCPriceFromRedis() {
+        String btcPriceKey = ApplicationConstants.BTC_PRICE_KEY;
         String btcPriceStr = redisTemplate.opsForValue().get(btcPriceKey);
         logger.info("Fetching BTC price from Redis with key: {}", btcPriceKey);  // Log Redis fetch operation
+
         return Optional.ofNullable(btcPriceStr)
                 .map(this::parseBTCPriceResponse)
                 .orElseThrow(() -> new IllegalStateException("BTC price not found in Redis"));
@@ -147,21 +184,15 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    private BigDecimal getCurrentBtcPrice() {
-        String priceStr = redisTemplate.opsForValue().get(btcPriceKey);
-        logger.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);  // Log Redis fetch operation
+    private BigDecimal calculateUsdAmount(BigDecimal btcPrice, BigDecimal btcAmount, TransactionType transactionType) {
+        BigDecimal amount = btcPrice.multiply(btcAmount);
 
-        // Parse the full BTCPriceResponseDto from the Redis JSON
-        BTCPriceResponseDto btcPriceResponseDto = Optional.ofNullable(priceStr)
-                .map(this::parseBTCPriceResponse)
-                .orElseThrow(() -> new IllegalStateException("BTC price not found in Redis"));
-
-        // Return only the btcPrice field
-        return Optional.ofNullable(btcPriceResponseDto.getBtcPrice())
-                .orElseThrow(() -> new IllegalStateException("BTC price is null in the Redis response"));
-    }
-
-    private BigDecimal calculateUsdAmount(BigDecimal btcPrice, BigDecimal btcAmount) {
-        return btcPrice.multiply(btcAmount);
+        if (transactionType == TransactionType.BUY) {
+            return amount;
+        } else if (transactionType == TransactionType.SELL) {
+            return amount.negate(); // Selling BTC adds USD
+        } else {
+            throw new IllegalArgumentException("Unsupported Transaction Type: " + transactionType);
+        }
     }
 }
