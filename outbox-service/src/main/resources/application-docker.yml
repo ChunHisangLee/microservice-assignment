@@ -23,20 +23,6 @@ spring:
     show-sql: true  # For debugging, shows SQL statements in the log
     open-in-view: false  # Disable Open Session in View for better performance
 
-app:
-  wallet:
-    cache-prefix: "walletBalance:"  # Redis key prefix for wallet balances
-    reply-to-queue: user-service.response.queue  # Reply queue for responses
-    queue:
-      create: wallet.create.queue      # Queue for wallet creation messages
-      update: wallet.update.queue      # Queue for wallet update messages
-      balance: wallet.balance.queue    # Queue for wallet balance requests
-    exchange: wallet-exchange          # Exchange for wallet messages
-    routing-key:
-      create: wallet.creation          # Routing key for wallet creation
-      update: wallet.update          # Routing key for wallet update
-      balance: wallet.balance          # Routing key for wallet balance requests
-
 # SpringDoc settings for API documentation
 springdoc:
   api-docs:

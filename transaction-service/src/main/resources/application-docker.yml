@@ -36,15 +36,6 @@ app:
     cache-prefix: "transactionCache:"  # Redis key prefix for transaction data
     cache-ttl: 10  # TTL in minutes (you can change this value)
     reply-to-queue: transaction-service.response.queue  # Reply queue for responses
-    queue:
-      create: transaction.create.queue   # Queue for transaction creation messages
-      update: transaction.update.queue   # Queue for transaction update messages
-      balance: transaction.balance.queue # Queue for transaction balance updates
-    exchange: transaction-exchange       # Exchange for transaction messages
-    routing-key:
-      create: transaction.creation       # Routing key for transaction creation
-      update: transaction.update         # Routing key for transaction updates
-      balance: transaction.balance       # Routing key for transaction balance updates
 
   redis:
     btc-price-key: "BTC_CURRENT_PRICE"  # Redis key for storing BTC price

@@ -23,11 +23,6 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# JWT settings specific to the Auth Service
-app:
-  jwtSecret: Xb34fJd9kPbvmJc84mDkV9b3Xb4fJd9kPbvmJc84mDkV9b3Xb34fJd9kPbvmJc84
-  jwtExpirationMs: 3600000  # 1 hour
-
 # Security settings (auth-service should have authentication enabled)
 security:
   authentication:
