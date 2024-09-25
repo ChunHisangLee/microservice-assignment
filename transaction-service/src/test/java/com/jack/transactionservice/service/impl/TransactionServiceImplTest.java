@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -62,10 +61,7 @@ class TransactionServiceImplTest {
     @Mock
     private TransactionRedisService transactionRedisService;
 
-    /**
-     * Using a Spy for ObjectMapper to allow real method calls while still being able to stub specific methods if needed.
-     */
-    @Spy
+    @Mock
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @InjectMocks
@@ -76,6 +72,8 @@ class TransactionServiceImplTest {
     private WalletResponseDto walletResponseDto;
     private Transaction sampleTransaction;
     private TransactionDto sampleTransactionDto;
+    private final String CACHE_PREFIX = "transactionCache:";
+    private final long CACHE_TTL = 10L; // in minutes
 
     /**
      * Sets up the test environment before each test.
@@ -121,8 +119,9 @@ class TransactionServiceImplTest {
                 .btcBalanceAfter(BigDecimal.valueOf(1.5))
                 .build();
 
-        // Inject the spied ObjectMapper into the service
-        ReflectionTestUtils.setField(transactionService, "objectMapper", objectMapper);
+        // Set the cachePrefix and cacheTTL on transactionService using ReflectionTestUtils
+        ReflectionTestUtils.setField(transactionService, "cachePrefix", CACHE_PREFIX);
+        ReflectionTestUtils.setField(transactionService, "cacheTTL", CACHE_TTL);
     }
 
     /**
@@ -131,20 +130,19 @@ class TransactionServiceImplTest {
     @Test
     void createTransaction_ShouldCreateTransactionSuccessfully() throws Exception {
         // Arrange
+        String btcPriceJson = "{\"id\":1,\"userId\":100,\"btcPriceHistoryId\":200,\"btcAmount\":0.5," +
+                "\"usdAmount\":25000.00,\"transactionTime\":\"2023-10-01T10:00:00\"," +
+                "\"transactionType\":\"BUY\",\"usdBalanceBefore\":10000.00,\"btcBalanceBefore\":1.0," +
+                "\"usdBalanceAfter\":7500.00,\"btcBalanceAfter\":1.5}";
 
-        // Stub transactionRedisService.getBTCPriceFromRedis to return BTCPriceResponseDto as JSON
-        String btcPriceJson = objectMapper.writeValueAsString(btcPriceResponseDto);
+        // Stub transactionRedisService.getBTCPriceFromRedis to return btcPriceJson
         when(transactionRedisService.getBTCPriceFromRedis(ApplicationConstants.BTC_PRICE_KEY)).thenReturn(btcPriceJson);
 
-        // Use doReturn() for stubbing methods on the Spy ObjectMapper
-        doReturn(btcPriceResponseDto).when(objectMapper).readValue(btcPriceJson, BTCPriceResponseDto.class);
+        // Stub ObjectMapper to deserialize btcPriceJson
+        when(objectMapper.readValue(btcPriceJson, BTCPriceResponseDto.class)).thenReturn(btcPriceResponseDto);
 
         // Stub walletServiceClient.getWalletBalance
         when(walletServiceClient.getWalletBalance(createTransactionRequestDto.getUserId())).thenReturn(walletResponseDto);
-
-        // Use doReturn() for stubbing methods on the Spy ObjectMapper
-        doReturn("{\"id\":1,\"userId\":100,\"btcPriceHistoryId\":1,\"btcAmount\":0.5,\"usdAmount\":250.00,\"transactionTime\":\"2023-10-01T10:00:00\",\"transactionType\":\"BUY\",\"usdBalanceBefore\":100.00,\"btcBalanceBefore\":1.0,\"usdBalanceAfter\":75.00,\"btcBalanceAfter\":1.5}")
-                .when(objectMapper).writeValueAsString(any(TransactionDto.class));
 
         // Stub transactionRepository.save
         when(transactionRepository.save(any(Transaction.class))).thenReturn(sampleTransaction);
@@ -152,6 +150,9 @@ class TransactionServiceImplTest {
         // Stub transactionMapper.toDto
         when(transactionMapper.toDto(any(Transaction.class), any(BigDecimal.class), any(BigDecimal.class),
                 any(BigDecimal.class), any(BigDecimal.class))).thenReturn(sampleTransactionDto);
+
+        // Stub objectMapper.writeValueAsString for TransactionDto if needed
+        when(objectMapper.writeValueAsString(any(TransactionDto.class))).thenReturn("{\"id\":1,\"userId\":100,\"btcPriceHistoryId\":200,\"btcAmount\":0.5,\"usdAmount\":250.00,\"transactionTime\":\"2023-10-01T10:00:00\",\"transactionType\":\"BUY\",\"usdBalanceBefore\":1000.00,\"btcBalanceBefore\":1.0,\"usdBalanceAfter\":750.00,\"btcBalanceAfter\":1.5}");
 
         // Act
         TransactionDto result = transactionService.createTransaction(createTransactionRequestDto, TransactionType.BUY);
