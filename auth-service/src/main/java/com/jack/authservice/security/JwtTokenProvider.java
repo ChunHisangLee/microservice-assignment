@@ -1,5 +1,6 @@
 package com.jack.authservice.security;
 
+import com.jack.common.constants.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -12,18 +13,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
     private final SecretKey secretKey;
-    private final int jwtExpirationMs;
+    private final long jwtExpirationMs;
 
-    public JwtTokenProvider(@Value("${app.jwtSecret}") String jwtSecret,
-                            @Value("${app.jwtExpirationMs}") int jwtExpirationMs) {
-        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        this.jwtExpirationMs = jwtExpirationMs;
+    public JwtTokenProvider() {
+        this.secretKey = Keys.hmacShaKeyFor(SecurityConstants.JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+        this.jwtExpirationMs = SecurityConstants.JWT_EXPIRATION_MS;
         logger.info("Initialized JwtTokenProvider with expiration time: {} ms", jwtExpirationMs);
     }
 

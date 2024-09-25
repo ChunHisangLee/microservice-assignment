@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   # PostgreSQL for Price Service
   pricedb:
@@ -149,9 +148,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://pricedb:5432/pricedb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: Ab123456
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: Ab123456
+      SPRING_REDIS_HOST: redis  # 修正環境變數名稱
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: Ab123456
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
       pricedb:
@@ -172,9 +171,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       USER_SERVICE_URL: http://user-service:8081
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: Ab123456
+      SPRING_REDIS_HOST: redis  # 修正環境變數名稱
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: Ab123456
     depends_on:
       redis:
         condition: service_healthy
@@ -224,10 +223,10 @@ services:
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: Ab123456
-      SPRING_DATA_REDIS_TIMEOUT: 60000ms
+      SPRING_REDIS_HOST: redis  # 修正環境變數名稱
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: Ab123456
+      SPRING_REDIS_TIMEOUT: 60000ms
     depends_on:
       walletdb:
         condition: service_healthy
@@ -255,9 +254,9 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: Ab123456
+      SPRING_REDIS_HOST: redis  # 修正環境變數名稱
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: Ab123456
     depends_on:
       outboxdb:
         condition: service_healthy
@@ -278,17 +277,17 @@ services:
       - "8085:8085"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://transactiondb:5432/transactiondb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://transactiondb:5432/transactiondb  # 修正為 transactiondb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: Ab123456
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: Ab123456
-      SPRING_DATA_REDIS_TIMEOUT: 60000ms
+      SPRING_REDIS_HOST: redis  # 修正環境變數名稱
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: Ab123456
+      SPRING_REDIS_TIMEOUT: 60000ms
     depends_on:
       transactiondb:
         condition: service_healthy
