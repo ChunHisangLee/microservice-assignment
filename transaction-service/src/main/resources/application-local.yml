@@ -22,6 +22,9 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false  # Disable open-in-view for better performance
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect  # Explicitly specify PostgreSQL dialect
 
   data:
     redis:
@@ -29,15 +32,6 @@ spring:
       port: 6379
       password: Ab123456
       timeout: 60000ms  # 60 seconds, specified in milliseconds
-
-# Custom application-specific settings
-app:
-  transaction:
-    cache-prefix: "transactionCache:"  # Redis key prefix for transaction data
-    cache-ttl: 10  # TTL in minutes (you can change this value)
-
-  redis:
-    btc-price-key: "BTC_CURRENT_PRICE"  # Redis key for storing BTC price
 
 # SpringDoc settings for API documentation
 springdoc:
