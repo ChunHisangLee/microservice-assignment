@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # PostgreSQL for Price Service
   pricedb:
@@ -57,6 +59,46 @@ services:
       retries: 5
     volumes:
       - walletdb-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # PostgreSQL for Outbox Service
+  outboxdb:
+    image: postgres:14.5
+    environment:
+      POSTGRES_DB: outboxdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ab123456
+    ports:
+      - "5437:5432"  # Host Port: Container Port
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - outboxdb-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # PostgreSQL for Transaction Service
+  transactiondb:
+    image: postgres:14.5
+    environment:
+      POSTGRES_DB: transactiondb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ab123456
+    ports:
+      - "5438:5432"  # Host Port: Container Port
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - transactiondb-data:/var/lib/postgresql/data
     restart: unless-stopped
 
   # Common Redis Service
@@ -133,8 +175,6 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: Ab123456
-      APP_JWTSECRET: Xb34fJd9kPbvmJc84mDkV9b3Xb34fJd9kPbvmJc84
-      APP_JWTEXPIRATIONMS: 3600000  # 1 hour
     depends_on:
       redis:
         condition: service_healthy
@@ -184,10 +224,77 @@ services:
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: Ab123456
+      SPRING_DATA_REDIS_TIMEOUT: 60000ms
     depends_on:
       walletdb:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+  # Outbox Service
+  outbox-service:
+    build:
+      context: ./outbox-service
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://outboxdb:5432/outboxdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Ab123456
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: Ab123456
+    depends_on:
+      outboxdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+  # Transaction Service
+  transaction-service:
+    build:
+      context: ./transaction-service
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://transactiondb:5432/transactiondb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Ab123456
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: Ab123456
+      SPRING_DATA_REDIS_TIMEOUT: 60000ms
+    depends_on:
+      transactiondb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - microservice-network
@@ -201,5 +308,7 @@ volumes:
   pricedb-data:
   userdb-data:
   walletdb-data:
+  outboxdb-data:
+  transactiondb-data:
   redis-data:
   rabbitmq-data:

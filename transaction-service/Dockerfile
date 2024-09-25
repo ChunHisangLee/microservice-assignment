@@ -10,17 +10,13 @@ WORKDIR /app
 COPY pom.xml ./
 COPY src ./src
 
-# Build the application
-RUN mvn clean package -DskipTests
-
 # Stage 2: Use a smaller OpenJDK image for the final artifact
 FROM openjdk:21-jdk-slim
 
 WORKDIR /app
 
-# Copy the Maven build artifact from the build stage to the container
-COPY --from=build /app/target/transaction-service-0.0.1-SNAPSHOT.jar /app/transaction-service.jar
-
+# Copy the built artifact from the previous stage
+COPY target/transaction-service-0.0.1-SNAPSHOT.jar /app/transaction-service.jar
 # Expose the port the application will run on
 EXPOSE 8085
 
