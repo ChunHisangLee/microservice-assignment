@@ -10,19 +10,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Component
 @Slf4j
 public class ScheduledTasks {
-
-    private static final double MIN_PRICE = 100;
-    private static final double MAX_PRICE = 460;
-    private static final double PRICE_INCREMENT = 10;
+    private static final BigDecimal MIN_PRICE = BigDecimal.valueOf(100);
+    private static final BigDecimal MAX_PRICE = BigDecimal.valueOf(460);
+    private static final BigDecimal PRICE_INCREMENT = BigDecimal.valueOf(10);
     public static final int SCHEDULE_RATE_MS = 5 * 1000;
 
     private boolean isIncreasing = true;
-    private double currentPrice = ApplicationConstants.INITIAL_PRICE;
+    private BigDecimal currentPrice = ApplicationConstants.INITIAL_PRICE;
 
     private final PriceService priceService;
     private final BTCPriceHistoryRepository btcPriceHistoryRepository;
@@ -35,29 +33,30 @@ public class ScheduledTasks {
     @PostConstruct
     protected void saveInitialPrice() {
         // Create and save the initial BTCPriceHistory entity
-        BTCPriceHistory initialPriceHistory = new BTCPriceHistory();
-        initialPriceHistory.setPrice(BigDecimal.valueOf(currentPrice));
-        initialPriceHistory.setTimestamp(LocalDateTime.now());
+        BTCPriceHistory initialPriceHistory = BTCPriceHistory.builder()
+                .price(currentPrice)
+                .build();
         BTCPriceHistory savedInitialPrice = btcPriceHistoryRepository.save(initialPriceHistory);
 
         // Save the price to Redis with the btchistoryID
-        priceService.setPriceWithId(savedInitialPrice.getId(), BigDecimal.valueOf(currentPrice));
+        priceService.setPriceWithId(savedInitialPrice.getId(), currentPrice);
 
-        log.info("Saved initial BTC Price to Redis and database: ID={}, Price={}",
-                savedInitialPrice.getId(), currentPrice);
+        log.info("Saved initial BTC Price to Redis and database: ID={}, Price={}", savedInitialPrice.getId(), currentPrice);
     }
 
     @Scheduled(fixedRate = SCHEDULE_RATE_MS)
     public void updateCurrentPrice() {
         // Update the current price based on the increasing flag
         if (isIncreasing) {
-            currentPrice += PRICE_INCREMENT;
-            if (currentPrice >= MAX_PRICE) {
+            currentPrice = currentPrice.add(PRICE_INCREMENT);
+
+            if (currentPrice.compareTo(MAX_PRICE) >= 0) {
                 isIncreasing = false;
             }
         } else {
-            currentPrice -= PRICE_INCREMENT;
-            if (currentPrice <= MIN_PRICE) {
+            currentPrice = currentPrice.subtract(PRICE_INCREMENT);
+
+            if (currentPrice.compareTo(MIN_PRICE) <= 0) {
                 isIncreasing = true;
             }
         }
@@ -65,15 +64,14 @@ public class ScheduledTasks {
         log.info("Updated BTC Price: {}", currentPrice);
 
         // Create and save the new BTCPriceHistory entity
-        BTCPriceHistory priceHistory = new BTCPriceHistory();
-        priceHistory.setPrice(BigDecimal.valueOf(currentPrice));
-        priceHistory.setTimestamp(LocalDateTime.now());
+        BTCPriceHistory priceHistory = BTCPriceHistory.builder()
+                .price(currentPrice)
+                .build();
         BTCPriceHistory savedPriceHistory = btcPriceHistoryRepository.save(priceHistory);
 
         // Save the updated price to Redis with the btchistoryID
-        priceService.setPriceWithId(savedPriceHistory.getId(), BigDecimal.valueOf(currentPrice));
+        priceService.setPriceWithId(savedPriceHistory.getId(), currentPrice);
 
-        log.info("Saved updated BTC Price to Redis and database: ID={}, Price={}",
-                savedPriceHistory.getId(), currentPrice);
+        log.info("Saved updated BTC Price to Redis and database: ID={}, Price={}", savedPriceHistory.getId(), currentPrice);
     }
 }

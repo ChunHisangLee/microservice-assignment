@@ -2,7 +2,6 @@ package com.jack.outboxservice.controller;
 
 import com.jack.outboxservice.dto.OutboxDto;
 import com.jack.outboxservice.service.OutboxService;
-import com.jack.outboxservice.service.impl.OutboxServiceImpl;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public class OutboxController {
             @RequestParam("btcAmount") BigDecimal btcAmount,
             @RequestParam("usdAmount") BigDecimal usdAmount) {
         try {
-            outboxService.processTransactionEvent(transactionId, userId, btcAmount,usdAmount);
+            outboxService.processTransactionEvent(transactionId, userId, btcAmount, usdAmount);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (Exception e) {
             logger.error("Error processing transaction event: transactionId={}, userId={}, btcAmount={}, usdAmount={}, error={}",
