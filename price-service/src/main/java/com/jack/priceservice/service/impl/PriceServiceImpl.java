@@ -1,10 +1,11 @@
 package com.jack.priceservice.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.priceservice.schedule.ScheduledTasks;
 import com.jack.priceservice.service.PriceService;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class PriceServiceImpl implements PriceService {
         this.objectMapper = objectMapper;
     }
 
+    @SneakyThrows
     @Override
     public BigDecimal getPrice() {
         logger.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);
@@ -41,34 +43,21 @@ public class PriceServiceImpl implements PriceService {
             return null;
         }
 
-        try {
-            // Convert the JSON string back to a DTO
-            BTCPriceResponseDto priceResponseDto = objectMapper.readValue(json, BTCPriceResponseDto.class);
-            return priceResponseDto.getBtcPrice();
-        } catch (Exception e) {
-            logger.error("Error deserializing BTCPriceResponseDto from JSON", e);
-            return null;
-        }
+        // Convert the JSON string back to a DTO
+        BTCPriceResponseDto priceResponseDto = objectMapper.readValue(json, BTCPriceResponseDto.class);
+        return priceResponseDto.getBtcPrice();
     }
 
+    @SneakyThrows
     @Override
-    public void setPriceWithId(Long id, BigDecimal price) {
-        if (price == null) {
-            logger.warn("Attempted to set null price in Redis.");
-            return;
-        }
+    public void setPriceWithId(Long id, @NonNull BigDecimal price) {
+        BTCPriceResponseDto dto = BTCPriceResponseDto.builder()
+                .id(id)
+                .btcPrice(price)
+                .build();
 
-        try {
-            BTCPriceResponseDto dto = BTCPriceResponseDto.builder()
-                    .id(id)
-                    .btcPrice(price)
-                    .build();
-
-            String priceJson = objectMapper.writeValueAsString(dto);
-            redisTemplate.opsForValue().set(btcPriceKey, priceJson, Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
-            logger.info("Set price with ID in Redis: {}", priceJson);
-        } catch (JsonProcessingException e) {
-            logger.error("Error serializing BTC price data", e);
-        }
+        String priceJson = objectMapper.writeValueAsString(dto);
+        redisTemplate.opsForValue().set(btcPriceKey, priceJson, Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
+        logger.info("Set price with ID in Redis: {}", priceJson);
     }
 }

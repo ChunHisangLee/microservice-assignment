@@ -20,7 +20,6 @@ public class BTCPriceHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal price;
 
