@@ -7,6 +7,7 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,24 +35,23 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void invalidateToken(String token) {
-        if (token != null && !token.trim().isEmpty()) {
-            // Check if token is already in the blacklist
-            Boolean isTokenBlacklisted = redisTemplate.hasKey(SecurityConstants.BLACKLIST_PREFIX + token);
-
-            if (Boolean.TRUE.equals(isTokenBlacklisted)) {
-                logger.info("Token is already blacklisted: {}", token);
-                return;  // Exit early if token is already blacklisted
-            }
-
-            long tokenExpiryDuration = getTokenExpiryDuration(token);
-            redisTemplate.opsForValue().set(SecurityConstants.BLACKLIST_PREFIX + token, token);
-            redisTemplate.expire(SecurityConstants.BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
-            logger.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
-        } else {
+    public void invalidateToken(@NonNull String token) {
+        if (token.trim().isEmpty()) {
             logger.warn("Invalid token provided for invalidation.");
             throw new IllegalArgumentException("Token is invalid or empty.");
         }
+
+        Boolean isTokenBlacklisted = redisTemplate.hasKey(SecurityConstants.BLACKLIST_PREFIX + token);
+
+        if (Boolean.TRUE.equals(isTokenBlacklisted)) {
+            logger.info("Token is already blacklisted: {}", token);
+            return;  // Exit early if token is already blacklisted
+        }
+
+        long tokenExpiryDuration = getTokenExpiryDuration(token);
+        redisTemplate.opsForValue().set(SecurityConstants.BLACKLIST_PREFIX + token, token);
+        redisTemplate.expire(SecurityConstants.BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
+        logger.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
     }
 
     @Override
