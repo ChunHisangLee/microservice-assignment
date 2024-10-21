@@ -21,8 +21,7 @@ import com.jack.userservice.mapper.UsersMapper;
 import com.jack.userservice.repository.UsersRepository;
 import com.jack.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,8 +35,8 @@ import static com.jack.common.constants.EventStatus.PENDING;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class UserServiceImpl implements UserService {
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UsersRepository usersRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthServiceClient authServiceClient;
@@ -51,7 +50,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto register(UserRegistrationRequestDto registrationDto) {
         if (usersRepository.findByEmail(registrationDto.getEmail()).isPresent()) {
-            logger.error("User registration failed. User with email '{}' already exists", registrationDto.getEmail());
+            log.error("User registration failed. User with email '{}' already exists", registrationDto.getEmail());
             throw new CustomErrorException(
                     ErrorCode.MAIL_ALREADY_EXISTS.getHttpStatus(),
                     ErrorCode.MAIL_ALREADY_EXISTS.getMessage(),
@@ -85,7 +84,7 @@ public class UserServiceImpl implements UserService {
                 .createdAt(LocalDateTime.now().toString())
                 .build();
 
-        logger.info("Sending outbox event for user ID: {}", savedUser.getId());
+        log.info("Sending outbox event for user ID: {}", savedUser.getId());
         outboxServiceClient.sendOutboxEvent(outboxEvent);
 
         return UserResponseDto.builder()
@@ -97,11 +96,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<Users> updateUser(Long id, Users users) {
-        logger.info("Attempting to update user with ID: {}", id);
+        log.info("Attempting to update user with ID: {}", id);
         Users existingUser = findUserById(id);
 
         if (usersRepository.findByEmail(users.getEmail()).filter(user -> !user.getId().equals(id)).isPresent()) {
-            logger.error("Email {} is already registered by another user.", users.getEmail());
+            log.error("Email {} is already registered by another user.", users.getEmail());
             throw new CustomErrorException(
                     ErrorCode.MAIL_ALREADY_EXISTS.getHttpStatus(),
                     ErrorCode.MAIL_ALREADY_EXISTS.getMessage(),
@@ -115,20 +114,20 @@ public class UserServiceImpl implements UserService {
         if (users.getPassword() != null && !users.getPassword().isEmpty()) {
             String encodedPassword = passwordEncoder.encode(users.getPassword());
             existingUser.setPassword(encodedPassword);
-            logger.debug("Password updated for user with ID: {}", id);
+            log.debug("Password updated for user with ID: {}", id);
         }
 
         Users updatedUser = usersRepository.save(existingUser);
-        logger.info("User with ID: {} updated successfully.", id);
+        log.info("User with ID: {} updated successfully.", id);
         return Optional.of(updatedUser);
     }
 
     @Override
     public void deleteUser(Long id) {
-        logger.info("Attempting to delete user with ID: {}", id);
+        log.info("Attempting to delete user with ID: {}", id);
         Users user = findUserById(id);
         usersRepository.delete(user);
-        logger.info("User with ID: {} deleted successfully.", id);
+        log.info("User with ID: {} deleted successfully.", id);
     }
 
     @Override
@@ -152,7 +151,7 @@ public class UserServiceImpl implements UserService {
         // Step 1: Try getting balance from Redis cache first
         WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
         if (cachedBalance != null) {
-            logger.info("Returning balance from Redis for user ID: {}", userId);
+            log.info("Returning balance from Redis for user ID: {}", userId);
             usersDTO.setUsdBalance(cachedBalance.getUsdBalance());
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
             return usersDTO;
@@ -166,10 +165,10 @@ public class UserServiceImpl implements UserService {
 
             // Cache the balance in Redis for future requests
             redisTemplate.opsForValue().set(cacheKey, walletBalance, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);
-            logger.info("Balance for user ID {} cached in Redis.", userId);
+            log.info("Balance for user ID {} cached in Redis.", userId);
             return usersDTO;
         } catch (Exception e) {
-            logger.warn("Feign call failed for user ID {}. Sending async request to wallet-service via RabbitMQ.", userId);
+            log.warn("Feign call failed for user ID {}. Sending async request to wallet-service via RabbitMQ.", userId);
 
             // Step 3: If Feign fails, send balance request asynchronously via RabbitMQ
             walletBalanceRequestSender.sendBalanceRequest(userId);
@@ -183,7 +182,7 @@ public class UserServiceImpl implements UserService {
 
     private Users findUserById(Long id) {
         return usersRepository.findById(id).orElseThrow(() -> {
-            logger.error("User with ID: {} not found.", id);
+            log.error("User with ID: {} not found.", id);
             return new CustomErrorException(
                     ErrorCode.USER_NOT_FOUND.getHttpStatus(),
                     ErrorCode.USER_NOT_FOUND.getMessage(),
@@ -194,7 +193,7 @@ public class UserServiceImpl implements UserService {
 
     private Users findUserByEmail(String email) {
         return usersRepository.findByEmail(email).orElseThrow(() -> {
-            logger.error("Invalid email or password for email: {}", email);
+            log.error("Invalid email or password for email: {}", email);
             return new CustomErrorException(
                     ErrorCode.INVALID_EMAIL_OR_PASSWORD.getHttpStatus(),
                     ErrorCode.INVALID_EMAIL_OR_PASSWORD.getMessage(),
