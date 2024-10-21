@@ -5,9 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -17,19 +15,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
+@Log4j2
 public class JwtTokenProvider {
-    private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
     private final SecretKey secretKey;
     private final long jwtExpirationMs;
 
     public JwtTokenProvider() {
         this.secretKey = Keys.hmacShaKeyFor(SecurityConstants.JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8));
         this.jwtExpirationMs = SecurityConstants.JWT_EXPIRATION_MS;
-        logger.info("Initialized JwtTokenProvider with expiration time: {} ms", jwtExpirationMs);
+        log.info("Initialized JwtTokenProvider with expiration time: {} ms", jwtExpirationMs);
     }
 
     public String generateTokenFromEmail(String email) {
-        logger.info("Generating JWT token for email: {}", email);
+        log.info("Generating JWT token for email: {}", email);
         String token = Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
@@ -37,35 +35,35 @@ public class JwtTokenProvider {
                 .signWith(secretKey)
                 .compact();
 
-        logger.info("Generated JWT token successfully for email: {}", email);
+        log.info("Generated JWT token successfully for email: {}", email);
         return token;
     }
 
 
     // Extract email from the JWT token
     public String getEmailFromToken(String token) {
-        logger.debug("Extracting email from token: {}", token);
+        log.debug("Extracting email from token: {}", token);
         String email = getClaimsFromToken(token).getSubject();
-        logger.info("Extracted email: {}", email);
+        log.info("Extracted email: {}", email);
         return email;
     }
 
     // Extract all claims from the JWT token
     public Claims getClaimsFromToken(String token) {
-        logger.debug("Parsing claims from token");
+        log.debug("Parsing claims from token");
         JwtParser parser = Jwts.parser()
                 .verifyWith(secretKey)
                 .build();
 
         // Parse the claims from the token
         Claims claims = parser.parseSignedClaims(token).getPayload();
-        logger.debug("Parsed claims successfully");
+        log.debug("Parsed claims successfully");
         return claims;
     }
 
     // Validate the JWT token
     public boolean validateToken(String token) {
-        logger.info("Validating JWT token: {}", token);
+        log.info("Validating JWT token: {}", token);
 
         try {
             JwtParser parser = Jwts.parser()
@@ -74,7 +72,7 @@ public class JwtTokenProvider {
 
             // Parse and validate the token (will throw an exception if invalid)
             parser.parse(token);
-            logger.info("JWT token is valid");
+            log.info("JWT token is valid");
             return true;
         } catch (Exception ex) {
             System.err.println("Invalid JWT token: " + ex.getMessage());
@@ -83,10 +81,10 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        logger.info("Creating authentication object from JWT token");
+        log.info("Creating authentication object from JWT token");
         // Extract the email (not username) from the token
         String email = getEmailFromToken(token);
-        logger.info("Creating Authentication object for email: {}", email);
+        log.info("Creating Authentication object for email: {}", email);
         return new UsernamePasswordAuthenticationToken(email, null, null);  // No credentials or authorities
     }
 }

@@ -5,8 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,8 +14,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Log4j2
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private static final Logger jwtLogger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtTokenProvider jwtTokenProvider;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
@@ -29,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        jwtLogger.info("JwtAuthenticationFilter is processing the request");
+        log.info("JwtAuthenticationFilter is processing the request");
 
         try {
             String token = getJwtFromRequest(request);
@@ -37,12 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                jwtLogger.info("Authenticated request with token for user: {}", authentication.getName());
+                log.info("Authenticated request with token for user: {}", authentication.getName());
             } else {
-                jwtLogger.warn("Invalid or missing JWT token in request");
+                log.warn("Invalid or missing JWT token in request");
             }
         } catch (Exception ex) {
-            jwtLogger.error("Failed to authenticate user with token", ex);
+            log.error("Failed to authenticate user with token", ex);
         }
 
         filterChain.doFilter(request, response);

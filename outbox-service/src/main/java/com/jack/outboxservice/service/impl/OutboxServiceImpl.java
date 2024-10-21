@@ -10,8 +10,7 @@ import com.jack.outboxservice.entity.Outbox;
 import com.jack.outboxservice.mapper.OutboxMapper;
 import com.jack.outboxservice.repository.OutboxRepository;
 import com.jack.outboxservice.service.OutboxService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,8 +21,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Log4j2
 public class OutboxServiceImpl implements OutboxService {
-    private static final Logger logger = LoggerFactory.getLogger(OutboxServiceImpl.class);
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
@@ -72,10 +71,10 @@ public class OutboxServiceImpl implements OutboxService {
                     outbox.setProcessedAt(LocalDateTime.now());
                     outboxRepository.save(outbox);  // Update the outbox entry
                 } else {
-                    logger.warn("Payload is null for outbox entry with ID: {}", outbox.getId());
+                    log.warn("Payload is null for outbox entry with ID: {}", outbox.getId());
                 }
             } catch (Exception e) {
-                logger.error("Failed to process outbox message with ID: {}: {}", outbox.getId(), e.getMessage());
+                log.error("Failed to process outbox message with ID: {}: {}", outbox.getId(), e.getMessage());
             }
         }
     }
@@ -92,9 +91,9 @@ public class OutboxServiceImpl implements OutboxService {
                     .build();
 
             outboxRepository.save(outbox);
-            logger.info("Transaction event successfully processed: transactionId={}, userId={}, btcAmount={}", transactionId, userId, btcAmount);
+            log.info("Transaction event successfully processed: transactionId={}, userId={}, btcAmount={}", transactionId, userId, btcAmount);
         } catch (Exception e) {
-            logger.error("Failed to process transaction event: transactionId={}, userId={}, btcAmount={}, error={}", transactionId, userId, btcAmount, e.getMessage());
+            log.error("Failed to process transaction event: transactionId={}, userId={}, btcAmount={}, error={}", transactionId, userId, btcAmount, e.getMessage());
         }
     }
 }

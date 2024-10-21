@@ -5,14 +5,14 @@ import com.jack.priceservice.entity.BTCPriceHistory;
 import com.jack.priceservice.repository.BTCPriceHistoryRepository;
 import com.jack.priceservice.service.PriceService;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 @Component
-@Slf4j
+@Log4j2
 public class ScheduledTasks {
     private static final BigDecimal MIN_PRICE = BigDecimal.valueOf(100);
     private static final BigDecimal MAX_PRICE = BigDecimal.valueOf(460);

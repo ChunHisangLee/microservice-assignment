@@ -3,8 +3,7 @@ package com.jack.outboxservice.controller;
 import com.jack.outboxservice.dto.OutboxDto;
 import com.jack.outboxservice.service.OutboxService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,8 @@ import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/outbox")
+@Log4j2
 public class OutboxController {
-    private static final Logger logger = LoggerFactory.getLogger(OutboxController.class);
     private final OutboxService outboxService;
 
     public OutboxController(OutboxService outboxService) {
@@ -33,7 +32,7 @@ public class OutboxController {
             outboxService.processTransactionEvent(transactionId, userId, btcAmount, usdAmount);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (Exception e) {
-            logger.error("Error processing transaction event: transactionId={}, userId={}, btcAmount={}, usdAmount={}, error={}",
+            log.error("Error processing transaction event: transactionId={}, userId={}, btcAmount={}, usdAmount={}, error={}",
                     transactionId, userId, btcAmount, usdAmount, e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing transaction event");
         }

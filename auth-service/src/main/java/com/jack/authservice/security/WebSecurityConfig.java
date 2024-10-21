@@ -1,8 +1,7 @@
 package com.jack.authservice.security;
 
 import com.jack.common.constants.SecurityConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@Log4j2
 public class WebSecurityConfig {
-    private static final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
     private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${security.authentication.enabled:true}")
@@ -32,10 +31,10 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        logger.info("Configuring security filter chain");
+        log.info("Configuring security filter chain");
 
         if (authenticationEnabled) {
-            logger.info("Authentication is ENABLED");
+            log.info("Authentication is ENABLED");
             http
                     .csrf(AbstractHttpConfigurer::disable)  // Disable CSRF as we're using JWT tokens
                     .authorizeHttpRequests(authorize -> authorize
@@ -45,7 +44,7 @@ public class WebSecurityConfig {
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))  // Stateless session
                     .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);  // JWT filter before UsernamePasswordAuthenticationFilter
         } else {
-            logger.info("Authentication is DISABLED");
+            log.info("Authentication is DISABLED");
             http
                     .csrf(AbstractHttpConfigurer::disable)  // Disable CSRF
                     .authorizeHttpRequests(authorize -> authorize
@@ -53,19 +52,19 @@ public class WebSecurityConfig {
                     );
         }
 
-        logger.info("Security filter chain successfully configured");
+        log.info("Security filter chain successfully configured");
         return http.build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        logger.info("Creating AuthenticationManager");
+        log.info("Creating AuthenticationManager");
         return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        logger.info("Creating PasswordEncoder (BCrypt)");
+        log.info("Creating PasswordEncoder (BCrypt)");
         return new BCryptPasswordEncoder();
     }
 }

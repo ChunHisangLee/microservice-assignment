@@ -8,8 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +18,8 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Log4j2
 public class TokenServiceImpl implements TokenService {
-    private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
     private SecretKey secretKey;
 
@@ -37,21 +36,21 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public void invalidateToken(@NonNull String token) {
         if (token.trim().isEmpty()) {
-            logger.warn("Invalid token provided for invalidation.");
+            log.warn("Invalid token provided for invalidation.");
             throw new IllegalArgumentException("Token is invalid or empty.");
         }
 
         Boolean isTokenBlacklisted = redisTemplate.hasKey(SecurityConstants.BLACKLIST_PREFIX + token);
 
         if (Boolean.TRUE.equals(isTokenBlacklisted)) {
-            logger.info("Token is already blacklisted: {}", token);
+            log.info("Token is already blacklisted: {}", token);
             return;  // Exit early if token is already blacklisted
         }
 
         long tokenExpiryDuration = getTokenExpiryDuration(token);
         redisTemplate.opsForValue().set(SecurityConstants.BLACKLIST_PREFIX + token, token);
         redisTemplate.expire(SecurityConstants.BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
-        logger.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
+        log.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
     }
 
     @Override
@@ -62,7 +61,7 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public boolean validateToken(String token, Long userId) {
         if (isTokenBlacklisted(token)) {
-            logger.warn("Token is blacklisted: {}", token);
+            log.warn("Token is blacklisted: {}", token);
             return false;
         }
 
@@ -75,7 +74,7 @@ public class TokenServiceImpl implements TokenService {
             Long tokenUserId = Long.parseLong(claims.getSubject());
             return tokenUserId.equals(userId);
         } catch (Exception e) {
-            logger.error("The Token is invalid: {}", e.getMessage());
+            log.error("The Token is invalid: {}", e.getMessage());
             return false;
         }
     }
@@ -92,13 +91,13 @@ public class TokenServiceImpl implements TokenService {
             long timeToExpiry = (expiration.getTime() - now) / 1000;
 
             if (timeToExpiry <= 0) {
-                logger.warn("Token has already expired.");
+                log.warn("Token has already expired.");
                 return 0;
             }
 
             return timeToExpiry;
         } catch (Exception e) {
-            logger.error("Failed to parse JWT token to get expiry duration: {}", e.getMessage());
+            log.error("Failed to parse JWT token to get expiry duration: {}", e.getMessage());
             return 0;
         }
     }

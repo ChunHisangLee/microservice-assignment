@@ -5,16 +5,15 @@ import com.jack.authservice.service.TokenService;
 import com.jack.common.constants.SecurityConstants;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@Log4j2
 public class AuthController {
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
     private final TokenService tokenService;
 
@@ -27,7 +26,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> login(@RequestBody AuthRequestDto authRequestDTO) {
         AuthResponseDto authResponse = authService.login(authRequestDTO);
-        logger.info("User {} logged in successfully", authRequestDTO.getEmail());
+        log.info("User {} logged in successfully", authRequestDTO.getEmail());
         return ResponseEntity.ok(authResponse);
     }
 
@@ -38,14 +37,14 @@ public class AuthController {
 
             try {
                 tokenService.invalidateToken(jwtToken);
-                logger.info("Token invalidated successfully: {}", jwtToken);
+                log.info("Token invalidated successfully: {}", jwtToken);
                 return ResponseEntity.ok().build();
             } catch (Exception e) {
-                logger.error("Failed to invalidate token: {}", e.getMessage());
+                log.error("Failed to invalidate token: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
         } else {
-            logger.warn("Invalid token provided for logout.");
+            log.warn("Invalid token provided for logout.");
             return ResponseEntity.badRequest().build();
         }
     }
@@ -62,18 +61,18 @@ public class AuthController {
                 boolean isValid = tokenService.validateToken(token, userId);
 
                 if (isValid) {
-                    logger.info("Token is valid for userId: {}", userId);
+                    log.info("Token is valid for userId: {}", userId);
                     return ResponseEntity.ok(true);
                 } else {
-                    logger.warn("Token is invalid or does not match userId: {}", userId);
+                    log.warn("Token is invalid or does not match userId: {}", userId);
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
                 }
             } catch (Exception e) {
-                logger.error("Error validating token: {}", e.getMessage());
+                log.error("Error validating token: {}", e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
             }
         } else {
-            logger.warn("Invalid token format.");
+            log.warn("Invalid token format.");
             return ResponseEntity.badRequest().body(false);
         }
     }

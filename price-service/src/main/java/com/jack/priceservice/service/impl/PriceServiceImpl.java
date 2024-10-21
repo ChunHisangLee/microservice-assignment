@@ -6,8 +6,7 @@ import com.jack.common.dto.response.BTCPriceResponseDto;
 import com.jack.priceservice.schedule.ScheduledTasks;
 import com.jack.priceservice.service.PriceService;
 import lombok.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -17,8 +16,8 @@ import java.math.BigDecimal;
 import java.time.Duration;
 
 @Service
+@Log4j2
 public class PriceServiceImpl implements PriceService {
-    private static final Logger logger = LoggerFactory.getLogger(PriceServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -32,13 +31,13 @@ public class PriceServiceImpl implements PriceService {
 
     @Override
     public BigDecimal getPrice() {
-        logger.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);
+        log.info("Fetching current BTC price from Redis with key: {}", btcPriceKey);
         // Fetch the price from Redis
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         String json = valueOperations.get(btcPriceKey);
 
         if (json == null) {
-            logger.warn("No data found in Redis for key: {}", btcPriceKey);
+            log.warn("No data found in Redis for key: {}", btcPriceKey);
             return null;
         }
 
@@ -47,7 +46,7 @@ public class PriceServiceImpl implements PriceService {
             BTCPriceResponseDto priceResponseDto = objectMapper.readValue(json, BTCPriceResponseDto.class);
             return priceResponseDto.getBtcPrice();
         } catch (Exception e) {
-            logger.error("Error deserializing BTCPriceResponseDto from JSON", e);
+            log.error("Error deserializing BTCPriceResponseDto from JSON", e);
             return null;
         }
     }
@@ -62,9 +61,9 @@ public class PriceServiceImpl implements PriceService {
 
             String priceJson = objectMapper.writeValueAsString(dto);
             redisTemplate.opsForValue().set(btcPriceKey, priceJson, Duration.ofMillis(ScheduledTasks.SCHEDULE_RATE_MS));
-            logger.info("Set price with ID in Redis: {}", priceJson);
+            log.info("Set price with ID in Redis: {}", priceJson);
         } catch (JsonProcessingException e) {
-            logger.error("Error serializing BTC price data", e);
+            log.error("Error serializing BTC price data", e);
         }
     }
 }
