@@ -15,8 +15,7 @@ import com.jack.transactionservice.repository.TransactionRepository;
 import com.jack.transactionservice.service.TransactionRedisService;
 import com.jack.transactionservice.service.TransactionService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,9 +27,8 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class TransactionServiceImpl implements TransactionService {
-    private static final Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);
-
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final OutboxClient outboxClient;
@@ -41,14 +39,14 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionDto createTransaction(CreateTransactionRequestDto request, TransactionType transactionType) {
-        logger.info("Creating transaction for user: {}", request.getUserId());
+        log.info("Creating transaction for user: {}", request.getUserId());
 
         // Step 1: Fetch BTC price and btcPriceHistoryId from Redis
         BTCPriceResponseDto btcPrice = getCurrentBTCPriceFromRedis();
 
         // Step 2: Fetch user's current wallet balances from WalletService
         WalletResponseDto currentBalances = walletServiceClient.getWalletBalance(request.getUserId());
-        logger.info("Fetched wallet balances for user {}: USD - {}, BTC - {}", request.getUserId(),
+        log.info("Fetched wallet balances for user {}: USD - {}, BTC - {}", request.getUserId(),
                 currentBalances.getUsdBalance(), currentBalances.getBtcBalance());
 
         // Step 3: Calculate USD amount based on transaction type
@@ -74,7 +72,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        logger.info("Transaction created with ID: {}", transaction.getId());
+        log.info("Transaction created with ID: {}", transaction.getId());
 
         // Step 7: Publish the event to the outbox service
         outboxClient.sendTransactionEvent(transaction.getId(), request.getUserId(), transaction.getBtcAmount(),
@@ -93,18 +91,18 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Page<TransactionDto> getUserTransactionHistory(Long userId, Pageable pageable) {
-        logger.info("Fetching transaction history for user: {}", userId);
+        log.info("Fetching transaction history for user: {}", userId);
         return transactionRepository.findByUserId(userId, pageable)
                 .map(transaction -> transactionMapper.toDto(transaction, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
     }
 
     @Override
     public TransactionDto getTransactionById(Long transactionId) {
-        logger.info("Retrieving transaction with ID: {}", transactionId);
+        log.info("Retrieving transaction with ID: {}", transactionId);
         // Attempt to retrieve from cache first
         TransactionDto cachedTransaction = transactionRedisService.getTransactionFromRedis(transactionId);
         if (cachedTransaction != null) {
-            logger.info("Transaction with ID {} retrieved from cache", transactionId);
+            log.info("Transaction with ID {} retrieved from cache", transactionId);
             return cachedTransaction;
         }
 
@@ -117,7 +115,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         // Cache the retrieved transaction for future requests
         transactionRedisService.saveTransactionToRedis(transactionDto);
-        logger.info("Transaction with ID {} has been cached after retrieval from DB", transactionId);
+        log.info("Transaction with ID {} has been cached after retrieval from DB", transactionId);
 
         return transactionDto;
     }
@@ -125,7 +123,7 @@ public class TransactionServiceImpl implements TransactionService {
     private void cacheTransaction(Transaction transaction) {
         TransactionDto transactionDto = transactionMapper.toDto(transaction, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
         transactionRedisService.saveTransactionToRedis(transactionDto);
-        logger.info("Transaction with ID {} has been cached successfully.", transaction.getId());
+        log.info("Transaction with ID {} has been cached successfully.", transaction.getId());
     }
 
     private BigDecimal calculateNewUsdBalance(BigDecimal usdBalanceBefore, BigDecimal btcAmount, TransactionType transactionType, BigDecimal btcPrice) {
@@ -162,7 +160,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BTCPriceResponseDto getCurrentBTCPriceFromRedis() {
         String btcPriceKey = ApplicationConstants.BTC_PRICE_KEY;
-        logger.info("Fetching BTC price from Redis with key: {}", btcPriceKey);
+        log.info("Fetching BTC price from Redis with key: {}", btcPriceKey);
         String btcPriceStr = transactionRedisService.getBTCPriceFromRedis(btcPriceKey);
         return Optional.ofNullable(btcPriceStr)
                 .map(this::parseBTCPriceResponse)
@@ -171,10 +169,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BTCPriceResponseDto parseBTCPriceResponse(String btcPriceStr) {
         try {
-            logger.info("Parsing BTC price response string: {}", btcPriceStr);
+            log.info("Parsing BTC price response string: {}", btcPriceStr);
             return objectMapper.readValue(btcPriceStr, BTCPriceResponseDto.class);
         } catch (Exception e) {
-            logger.error("Error deserializing BTCPriceResponseDto from JSON: {}", e.getMessage());
+            log.error("Error deserializing BTCPriceResponseDto from JSON: {}", e.getMessage());
             throw new IllegalStateException("Failed to parse BTC price from Redis: " + e.getMessage(), e);
         }
     }

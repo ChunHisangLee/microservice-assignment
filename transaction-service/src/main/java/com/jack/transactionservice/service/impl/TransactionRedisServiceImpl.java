@@ -6,8 +6,7 @@ import com.jack.common.constants.TransactionConstants;
 import com.jack.transactionservice.dto.TransactionDto;
 import com.jack.transactionservice.service.TransactionRedisService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -17,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class TransactionRedisServiceImpl implements TransactionRedisService {
-    private static final Logger logger = LoggerFactory.getLogger(TransactionRedisServiceImpl.class);
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -35,9 +34,9 @@ public class TransactionRedisServiceImpl implements TransactionRedisService {
             String redisKey = cachePrefix + transactionDto.getId();
             String transactionJson = objectMapper.writeValueAsString(transactionDto);
             redisTemplate.opsForValue().set(redisKey, transactionJson, cacheTTL, TimeUnit.MINUTES);
-            logger.info("Transaction with ID {} has been cached in Redis with key: {} and TTL: {} minutes", transactionDto.getId(), redisKey, cacheTTL);
+            log.info("Transaction with ID {} has been cached in Redis with key: {} and TTL: {} minutes", transactionDto.getId(), redisKey, cacheTTL);
         } catch (JsonProcessingException e) {
-            logger.error("Failed to serialize TransactionDto with ID {} for caching", transactionDto.getId(), e);
+            log.error("Failed to serialize TransactionDto with ID {} for caching", transactionDto.getId(), e);
             throw new IllegalStateException("Failed to serialize TransactionDto to JSON for caching", e);
         }
     }
@@ -46,7 +45,7 @@ public class TransactionRedisServiceImpl implements TransactionRedisService {
     public TransactionDto getTransactionFromRedis(Long transactionId) {
         String redisKey = cachePrefix + transactionId;
         String transactionJson = redisTemplate.opsForValue().get(redisKey);
-        logger.info("Transaction with ID {} was retrieved from Redis with key: {}", transactionId, redisKey);
+        log.info("Transaction with ID {} was retrieved from Redis with key: {}", transactionId, redisKey);
         return Optional.ofNullable(transactionJson)
                 .map(this::deserializeTransaction)
                 .orElse(null);
@@ -55,7 +54,7 @@ public class TransactionRedisServiceImpl implements TransactionRedisService {
     @Override
     public String getBTCPriceFromRedis(String btcPriceKey) {
         String btcPriceStr = redisTemplate.opsForValue().get(btcPriceKey);
-        logger.info("Fetching BTC price from Redis with key: {}", btcPriceKey);
+        log.info("Fetching BTC price from Redis with key: {}", btcPriceKey);
         return btcPriceStr;
     }
 
@@ -63,7 +62,7 @@ public class TransactionRedisServiceImpl implements TransactionRedisService {
         try {
             return objectMapper.readValue(transactionJson, TransactionDto.class);
         } catch (JsonProcessingException e) {
-            logger.error("Failed to deserialize transaction JSON for key: {}", transactionJson, e);
+            log.error("Failed to deserialize transaction JSON for key: {}", transactionJson, e);
             throw new IllegalStateException("Failed to deserialize JSON to TransactionDto", e);
         }
     }
