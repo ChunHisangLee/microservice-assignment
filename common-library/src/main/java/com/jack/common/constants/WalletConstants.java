@@ -1,6 +1,6 @@
 package com.jack.common.constants;
 
-public class WalletConstants {
+public final class WalletConstants {
 
     private WalletConstants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");

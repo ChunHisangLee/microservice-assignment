@@ -1,62 +1,81 @@
 package com.jack.walletservice.config;
 
 import com.jack.common.constants.WalletConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Log4j2
 public class RabbitMQConfig {
+    // Define Exchange
+    @Bean
+    public TopicExchange walletExchange() {
+        log.info("Creating exchange: {}", WalletConstants.WALLET_EXCHANGE);
+        return ExchangeBuilder.topicExchange(WalletConstants.WALLET_EXCHANGE)
+                .durable(true)
+                .build();
+    }
 
-    private static final Logger logger = LoggerFactory.getLogger(RabbitMQConfig.class);
-
-    // Define queues
+    // Define Queues
     @Bean
     public Queue walletCreateQueue() {
-        logger.info("Creating walletCreateQueue: {}", WalletConstants.WALLET_CREATE_QUEUE);
-        return new Queue(WalletConstants.WALLET_CREATE_QUEUE, true);
+        log.info("Creating walletCreateQueue: {}", WalletConstants.WALLET_CREATE_QUEUE);
+        return QueueBuilder.durable(WalletConstants.WALLET_CREATE_QUEUE)
+                .build();
     }
 
     @Bean
     public Queue walletUpdateQueue() {
-        logger.info("Creating walletUpdateQueue: {}", WalletConstants.WALLET_UPDATE_QUEUE);
-        return new Queue(WalletConstants.WALLET_UPDATE_QUEUE, true);
+        log.info("Creating walletUpdateQueue: {}", WalletConstants.WALLET_UPDATE_QUEUE);
+        return QueueBuilder.durable(WalletConstants.WALLET_UPDATE_QUEUE)
+                .build();
     }
 
     @Bean
     public Queue walletBalanceQueue() {
-        logger.info("Creating walletBalanceQueue: {}", WalletConstants.WALLET_BALANCE_QUEUE);
-        return new Queue(WalletConstants.WALLET_BALANCE_QUEUE, true);
+        log.info("Creating walletBalanceQueue: {}", WalletConstants.WALLET_BALANCE_QUEUE);
+        return QueueBuilder.durable(WalletConstants.WALLET_BALANCE_QUEUE)
+                .build();
     }
 
-    // Define exchange
+    // Bindings
     @Bean
-    public TopicExchange walletExchange() {
-        logger.info("Creating exchange: {}", WalletConstants.WALLET_EXCHANGE);
-        return new TopicExchange(WalletConstants.WALLET_EXCHANGE);
-    }
-
-    // Bind queues to exchange with respective routing keys
-    @Bean
-    public Binding bindingCreateQueue() {
-        logger.info("Binding create queue with routing key: {}", WalletConstants.WALLET_CREATE_ROUTING_KEY);
-        return BindingBuilder.bind(walletCreateQueue()).to(walletExchange()).with(WalletConstants.WALLET_CREATE_ROUTING_KEY);
-    }
-
-    @Bean
-    public Binding bindingUpdateQueue() {
-        logger.info("Binding update queue with routing key: {}", WalletConstants.WALLET_UPDATE_ROUTING_KEY);
-        return BindingBuilder.bind(walletUpdateQueue()).to(walletExchange()).with(WalletConstants.WALLET_UPDATE_ROUTING_KEY);
+    public Binding bindingCreateQueue(Queue walletCreateQueue, TopicExchange walletExchange) {
+        log.info("Binding CreateQueue '{}' to exchange '{}' with routing key '{}'",
+                WalletConstants.WALLET_CREATE_QUEUE,
+                WalletConstants.WALLET_EXCHANGE,
+                WalletConstants.WALLET_CREATE_ROUTING_KEY);
+        return BindingBuilder.bind(walletCreateQueue)
+                .to(walletExchange)
+                .with(WalletConstants.WALLET_CREATE_ROUTING_KEY);
     }
 
     @Bean
-    public Binding bindingBalanceQueue() {
-        logger.info("Binding balance queue with routing key: {}", WalletConstants.WALLET_BALANCE_ROUTING_KEY);
-        return BindingBuilder.bind(walletBalanceQueue()).to(walletExchange()).with(WalletConstants.WALLET_BALANCE_ROUTING_KEY);
+    public Binding bindingUpdateQueue(Queue walletUpdateQueue, TopicExchange walletExchange) {
+        log.info("Binding UpdateQueue '{}' to exchange '{}' with routing key '{}'",
+                WalletConstants.WALLET_UPDATE_QUEUE,
+                WalletConstants.WALLET_EXCHANGE,
+                WalletConstants.WALLET_UPDATE_ROUTING_KEY);
+        return BindingBuilder.bind(walletUpdateQueue)
+                .to(walletExchange)
+                .with(WalletConstants.WALLET_UPDATE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding bindingBalanceQueue(Queue walletBalanceQueue, TopicExchange walletExchange) {
+        log.info("Binding BalanceQueue '{}' to exchange '{}' with routing key '{}'",
+                WalletConstants.WALLET_BALANCE_QUEUE,
+                WalletConstants.WALLET_EXCHANGE,
+                WalletConstants.WALLET_BALANCE_ROUTING_KEY);
+        return BindingBuilder.bind(walletBalanceQueue)
+                .to(walletExchange)
+                .with(WalletConstants.WALLET_BALANCE_ROUTING_KEY);
     }
 }

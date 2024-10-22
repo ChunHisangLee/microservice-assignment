@@ -1,72 +1,64 @@
 package com.jack.userservice.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.jack.common.constants.UserConstants;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Log4j2
 public class RabbitMQConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(RabbitMQConfig.class);
-
-    @Value("${app.wallet.queue.create}")
-    private String walletCreateQueue;
-
-    @Value("${app.wallet.queue.update}")
-    private String walletUpdateQueue;
-
-    @Value("${app.wallet.queue.balance}")
-    private String walletBalanceQueue;
-
-    @Value("${app.wallet.exchange}")
-    private String walletExchange;
-
-    @Value("${app.wallet.routing-key.create}")
-    private String walletCreateRoutingKey;
-
-    @Value("${app.wallet.routing-key.update}")
-    private String walletUpdateRoutingKey;
-
-    @Value("${app.wallet.routing-key.balance}")
-    private String walletBalanceRoutingKey;
-
-    // Define queues
+    // Define Exchange
     @Bean
-    public Queue walletCreateQueue() {
-        logger.info("Creating queue: {}", walletCreateQueue);
-        return new Queue(walletCreateQueue, true); // Durable queue for persistence
+    public TopicExchange userExchange() {
+        log.info("Creating exchange: {}", UserConstants.USER_EXCHANGE);
+        return ExchangeBuilder.topicExchange(UserConstants.USER_EXCHANGE)
+                .durable(true)
+                .build();
     }
 
-
+    // Define Queues
     @Bean
-    public Queue walletBalanceQueue() {
-        logger.info("The balance of queue: {}", walletBalanceQueue);
-        return new Queue(walletBalanceQueue, true);
-    }
-
-    // Define exchange
-    @Bean
-    public TopicExchange walletExchange() {
-        logger.info("Creating exchange: {}", walletExchange);
-        return new TopicExchange(walletExchange);
-    }
-
-    // Bind queues to exchange with respective routing keys
-    @Bean
-    public Binding bindingCreateQueue() {
-        logger.info("Binding the creation of queue {} to exchange {} with routing key {}", walletCreateQueue, walletExchange, walletCreateRoutingKey);
-        return BindingBuilder.bind(walletCreateQueue()).to(walletExchange()).with(walletCreateRoutingKey);
+    public Queue userCreateQueue() {
+        log.info("Creating userCreateQueue: {}", UserConstants.USER_CREATE_QUEUE);
+        return QueueBuilder.durable(UserConstants.USER_CREATE_QUEUE)
+                .build();
     }
 
     @Bean
-    public Binding bindingBalanceQueue() {
-        logger.info("Binding the balance of queue {} to exchange {} with routing key {}", walletCreateQueue, walletExchange, walletBalanceRoutingKey);
-        return BindingBuilder.bind(walletBalanceQueue()).to(walletExchange()).with(walletBalanceRoutingKey);
+    public Queue userUpdateQueue() {
+        log.info("Creating userUpdateQueue: {}", UserConstants.USER_UPDATE_QUEUE);
+        return QueueBuilder.durable(UserConstants.USER_UPDATE_QUEUE)
+                .build();
+    }
+
+    // Bindings
+    @Bean
+    public Binding bindingCreateQueue(Queue userCreateQueue, TopicExchange userExchange) {
+        log.info("Binding CreateQueue '{}' to exchange '{}' with routing key '{}'",
+                UserConstants.USER_CREATE_QUEUE,
+                UserConstants.USER_EXCHANGE,
+                UserConstants.USER_CREATE_ROUTING_KEY);
+        return BindingBuilder.bind(userCreateQueue)
+                .to(userExchange)
+                .with(UserConstants.USER_CREATE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding bindingUpdateQueue(Queue userUpdateQueue, TopicExchange userExchange) {
+        log.info("Binding UpdateQueue '{}' to exchange '{}' with routing key '{}'",
+                UserConstants.USER_UPDATE_QUEUE,
+                UserConstants.USER_EXCHANGE,
+                UserConstants.USER_UPDATE_ROUTING_KEY);
+        return BindingBuilder.bind(userUpdateQueue)
+                .to(userExchange)
+                .with(UserConstants.USER_UPDATE_ROUTING_KEY);
     }
 }
