@@ -6,7 +6,7 @@ public class TransactionConstants {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
-    public static final String TRANSACTION_CACHE_PREFIX = "transactionCache:";
+    public static final String TRANSACTION_CACHE_PREFIX = "transaction:";
     public static final long TRANSACTION_CACHE_TTL = 10;
 
     public static final String TRANSACTION_CREATE_QUEUE = "transaction.create.queue";

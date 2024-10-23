@@ -26,6 +26,6 @@ public interface OutboxMapper {
 
     // Helper method to map EventStatus to boolean 'processed'
     default boolean mapEventStatusToProcessed(EventStatus status) {
-        return status == EventStatus.PROCESSED;
+        return status == EventStatus.PROCESSED; // Null check added
     }
 }

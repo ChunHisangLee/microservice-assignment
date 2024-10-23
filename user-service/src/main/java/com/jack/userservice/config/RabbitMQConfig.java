@@ -14,11 +14,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Log4j2
 public class RabbitMQConfig {
-
     // Define Exchange
     @Bean
     public TopicExchange userExchange() {
-        log.info("Creating exchange: {}", UserConstants.USER_EXCHANGE);
+        log.info("Creating userExchange: {}", UserConstants.USER_EXCHANGE);
         return ExchangeBuilder.topicExchange(UserConstants.USER_EXCHANGE)
                 .durable(true)
                 .build();

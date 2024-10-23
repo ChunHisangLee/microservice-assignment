@@ -1,12 +1,12 @@
 package com.jack.common.constants;
 
-public final class UsersConstants {
-    private UsersConstants() {
+public final class UserConstants {
+    private UserConstants() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
     // Redis settings
-    public static final String USER_CACHE_PREFIX = "users:";
+    public static final String USER_CACHE_PREFIX = "user:";
 
     // User message queues
     public static final String USER_CREATE_QUEUE = "user.create.queue";

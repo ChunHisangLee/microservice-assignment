@@ -1,21 +1,27 @@
 package com.jack.userservice.messaging;
 
+import com.jack.common.constants.UserConstants;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class RabbitMQMessagePublisher implements MessagePublisher {
-
     private final RabbitTemplate rabbitTemplate;
 
     @Override
-    public void publish(String eventType, String payload) {
-        // Assuming eventType corresponds to the RabbitMQ exchange or routing key
-        // Adjust as per your RabbitMQ setup (exchange, routing key, etc.)
-        String exchange = "user.events.exchange"; // Define your exchange
-        String routingKey = eventType; // Or map eventType to specific routing keys
-        rabbitTemplate.convertAndSend(exchange, routingKey, payload);
+    public void publish(String routingKey, String payload) {
+        String exchange = UserConstants.USER_EXCHANGE;
+
+        try {
+            rabbitTemplate.convertAndSend(exchange, routingKey, payload);
+            log.info("Published message to exchange '{}', routing key '{}', payload '{}'", exchange, routingKey, payload);
+        } catch (Exception e) {
+            log.error("Failed to publish message to exchange '{}', routing key '{}', payload '{}', error: {}",
+                    exchange, routingKey, payload, e.getMessage());
+        }
     }
 }

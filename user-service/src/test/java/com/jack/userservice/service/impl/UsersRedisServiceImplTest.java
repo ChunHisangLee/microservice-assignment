@@ -1,6 +1,6 @@
 package com.jack.userservice.service.impl;
 
-import com.jack.common.constants.UsersConstants;
+import com.jack.common.constants.UserConstants;
 import com.jack.userservice.dto.UsersDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,14 +46,14 @@ class UsersRedisServiceImplTest {
         usersRedisService.saveUserToRedis(sampleUser);
 
         // Assert
-        String expectedKey = UsersConstants.USER_CACHE_PREFIX + sampleUser.getId();
+        String expectedKey = UserConstants.USER_CACHE_PREFIX + sampleUser.getId();
         verify(valueOperations, times(1)).set(expectedKey, sampleUser);
     }
 
     @Test
     void getUserFromRedis_ShouldReturnUser_WhenUserExists() {
         // Arrange
-        String expectedKey = UsersConstants.USER_CACHE_PREFIX + sampleUser.getId();
+        String expectedKey = UserConstants.USER_CACHE_PREFIX + sampleUser.getId();
         when(valueOperations.get(expectedKey)).thenReturn(sampleUser);
 
         // Act
@@ -70,7 +70,7 @@ class UsersRedisServiceImplTest {
     @Test
     void getUserFromRedis_ShouldReturnNull_WhenUserDoesNotExist() {
         // Arrange
-        String expectedKey = UsersConstants.USER_CACHE_PREFIX + sampleUser.getId();
+        String expectedKey = UserConstants.USER_CACHE_PREFIX + sampleUser.getId();
         when(valueOperations.get(expectedKey)).thenReturn(null);
 
         // Act
@@ -87,7 +87,7 @@ class UsersRedisServiceImplTest {
         usersRedisService.deleteUserFromRedis(sampleUser.getId());
 
         // Assert
-        String expectedKey = UsersConstants.USER_CACHE_PREFIX + sampleUser.getId();
+        String expectedKey = UserConstants.USER_CACHE_PREFIX + sampleUser.getId();
         verify(redisTemplate, times(1)).delete(expectedKey);
     }
 

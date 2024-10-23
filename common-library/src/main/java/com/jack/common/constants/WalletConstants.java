@@ -7,7 +7,7 @@ public final class WalletConstants {
     }
 
     // Redis settings
-    public static final String WALLET_CACHE_PREFIX = "walletBalance:";
+    public static final String WALLET_CACHE_PREFIX = "wallet:";
 
     // Reply-to queue
     public static final String WALLET_REPLY_TO_QUEUE = "user-service.response.queue";
