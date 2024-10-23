@@ -23,14 +23,16 @@ public class UsersRedisServiceImpl implements UsersRedisService {
         Objects.requireNonNull(user, "User must not be null");
         Objects.requireNonNull(user.getId(), "User ID must not be null");
         String cacheKey = UserConstants.USER_CACHE_PREFIX + user.getId();
-        redisTemplate.opsForValue().set(cacheKey, user);
+        redisTemplate.opsForValue()
+                .set(cacheKey, user);
     }
 
     @Override
     public UsersDto getUserFromRedis(Long userId) {
         Objects.requireNonNull(userId, "User ID must not be null");
         String cacheKey = UserConstants.USER_CACHE_PREFIX + userId;
-        return redisTemplate.opsForValue().get(cacheKey);
+        return redisTemplate.opsForValue()
+                .get(cacheKey);
     }
 
     @Override

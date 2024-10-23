@@ -1,4 +1,4 @@
-package com.jack.common.dto.request;
+package com.jack.common.dto;
 
 import com.jack.common.constants.EventStatus;
 import lombok.*;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutboxRequestDto {
+public class OutboxDto {
     private Long id;                      // The unique identifier for the outbox entry
     private String aggregateType;         // The type of aggregate (e.g., Users, Order)
     private String aggregateId;           // The unique identifier of the aggregate instance

@@ -3,8 +3,7 @@ package com.jack.userservice.listener;
 import com.jack.common.constants.TransactionConstants;
 import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletResponseDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,9 +11,8 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Log4j2
 public class WalletBalanceResponseListener {
-    private static final Logger logger = LoggerFactory.getLogger(WalletBalanceResponseListener.class);
-
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
 
     public WalletBalanceResponseListener(RedisTemplate<String, WalletResponseDto> redisTemplate) {
@@ -26,7 +24,8 @@ public class WalletBalanceResponseListener {
         String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + walletResponse.getUserId();
 
         // Cache the wallet balance received from wallet-service
-        redisTemplate.opsForValue().set(cacheKey, walletResponse, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);
-        logger.info("Wallet balance for user ID {} cached in Redis.", walletResponse.getUserId());
+        redisTemplate.opsForValue()
+                .set(cacheKey, walletResponse, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);
+        log.info("Wallet balance for user ID {} cached in Redis.", walletResponse.getUserId());
     }
 }

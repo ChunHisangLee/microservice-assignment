@@ -1,6 +1,6 @@
 package com.jack.outboxservice.service;
 
-import com.jack.outboxservice.dto.OutboxDto;
+import com.jack.common.dto.OutboxDto;
 
 import java.math.BigDecimal;
 import java.util.Optional;

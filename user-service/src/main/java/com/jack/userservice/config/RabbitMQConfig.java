@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Log4j2
 public class RabbitMQConfig {
-    // Define Exchange
     @Bean
     public TopicExchange userExchange() {
         log.info("Creating userExchange: {}", UserConstants.USER_EXCHANGE);
@@ -23,7 +22,6 @@ public class RabbitMQConfig {
                 .build();
     }
 
-    // Define Queues
     @Bean
     public Queue userCreateQueue() {
         log.info("Creating userCreateQueue: {}", UserConstants.USER_CREATE_QUEUE);
@@ -38,7 +36,6 @@ public class RabbitMQConfig {
                 .build();
     }
 
-    // Bindings
     @Bean
     public Binding bindingCreateQueue(Queue userCreateQueue, TopicExchange userExchange) {
         log.info("Binding CreateQueue '{}' to exchange '{}' with routing key '{}'",

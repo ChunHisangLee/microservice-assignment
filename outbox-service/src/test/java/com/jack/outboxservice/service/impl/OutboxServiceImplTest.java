@@ -6,7 +6,7 @@ import com.jack.common.constants.EventStatus;
 import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.common.dto.response.WalletUpdateMessageDto;
-import com.jack.outboxservice.dto.OutboxDto;
+import com.jack.common.dto.OutboxDto;
 import com.jack.outboxservice.entity.Outbox;
 import com.jack.outboxservice.mapper.OutboxMapper;
 import com.jack.outboxservice.repository.OutboxRepository;

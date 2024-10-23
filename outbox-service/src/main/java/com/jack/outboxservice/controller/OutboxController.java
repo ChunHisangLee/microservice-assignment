@@ -1,6 +1,6 @@
 package com.jack.outboxservice.controller;
 
-import com.jack.outboxservice.dto.OutboxDto;
+import com.jack.common.dto.OutboxDto;
 import com.jack.outboxservice.service.OutboxService;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;

@@ -13,10 +13,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig extends RedisCommonConfig {
 
     @Bean
-    public RedisTemplate<String, UsersDto> redisUsersTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, UsersDto> redisTemplateForUsers(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, UsersDto> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 
+        // Set up key and value serializers
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());

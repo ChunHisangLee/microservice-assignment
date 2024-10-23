@@ -1,9 +1,8 @@
 package com.jack.userservice.service.impl;
 
-import com.jack.common.constants.ErrorCode;
-import com.jack.common.constants.ErrorPath;
-import com.jack.common.constants.TransactionConstants;
-import com.jack.common.constants.WalletConstants;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jack.common.constants.*;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.request.OutboxRequestDto;
 import com.jack.common.dto.request.UserRegistrationRequestDto;
@@ -25,13 +24,15 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static com.jack.common.constants.EventStatus.PENDING;
 
 @Service
 @RequiredArgsConstructor
@@ -45,17 +46,15 @@ public class UserServiceImpl implements UserService {
     private final OutboxServiceClient outboxServiceClient;
     private final WalletServiceClient walletServiceClient;
     private final WalletBalanceRequestSender walletBalanceRequestSender;
-
+    private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(1000.00);
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
+    @Transactional
     public UserResponseDto register(UserRegistrationRequestDto registrationDto) {
         if (usersRepository.findByEmail(registrationDto.getEmail()).isPresent()) {
             log.error("User registration failed. User with email '{}' already exists", registrationDto.getEmail());
-            throw new CustomErrorException(
-                    ErrorCode.MAIL_ALREADY_EXISTS.getHttpStatus(),
-                    ErrorCode.MAIL_ALREADY_EXISTS.getMessage(),
-                    ErrorPath.POST_USER_API.getPath()
-            );
+            throw createErrorResponse(ErrorCode.MAIL_ALREADY_EXISTS);
         }
 
         String encodedPassword = passwordEncoder.encode(registrationDto.getPassword());
@@ -66,24 +65,10 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         Users savedUser = usersRepository.save(newUser);
-
-        AuthRequestDto authRequest = AuthRequestDto.builder()
-                .email(savedUser.getEmail())
-                .password(registrationDto.getPassword())
-                .build();
-        AuthResponseDto authResponse = authServiceClient.login(authRequest);
+        AuthResponseDto authResponse = authenticateUser(savedUser.getEmail(), registrationDto.getPassword());
 
         // Prepare and send the outbox event via the outbox service
-        double initialBalance = 1000.00;
-        OutboxRequestDto outboxEvent = OutboxRequestDto.builder()
-                .aggregateId(savedUser.getId())
-                .aggregateType("User")
-                .payload("{ \"userId\": " + savedUser.getId() + ", \"initialBalance\": " + initialBalance + " }")
-                .routingKey(WalletConstants.WALLET_CREATE_ROUTING_KEY)
-                .status(PENDING.name())
-                .createdAt(LocalDateTime.now().toString())
-                .build();
-
+        OutboxRequestDto outboxEvent = createOutboxEvent(savedUser.getId());
         log.info("Sending outbox event for user ID: {}", savedUser.getId());
         outboxServiceClient.sendOutboxEvent(outboxEvent);
 
@@ -95,17 +80,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Optional<Users> updateUser(Long id, Users users) {
         log.info("Attempting to update user with ID: {}", id);
         Users existingUser = findUserById(id);
 
         if (usersRepository.findByEmail(users.getEmail()).filter(user -> !user.getId().equals(id)).isPresent()) {
             log.error("Email {} is already registered by another user.", users.getEmail());
-            throw new CustomErrorException(
-                    ErrorCode.MAIL_ALREADY_EXISTS.getHttpStatus(),
-                    ErrorCode.MAIL_ALREADY_EXISTS.getMessage(),
-                    ErrorPath.PUT_USER_API.getPath() + id
-            );
+            throw createErrorResponse(ErrorCode.MAIL_ALREADY_EXISTS);
         }
 
         existingUser.setName(users.getName());
@@ -123,6 +105,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
         log.info("Attempting to delete user with ID: {}", id);
         Users user = findUserById(id);
@@ -138,18 +121,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UsersDto getUserWithBalance(Long userId) {
-        Users user = usersRepository.findById(userId)
-                .orElseThrow(() -> new CustomErrorException(
-                        ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                        ErrorCode.USER_NOT_FOUND.getMessage(),
-                        ErrorPath.GET_USER_API.getPath() + userId
-                ));
-
+        Users user = findUserById(userId);
         UsersDto usersDTO = usersMapper.toDto(user);
         String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + userId;
 
         // Step 1: Try getting balance from Redis cache first
-        WalletResponseDto cachedBalance = redisTemplate.opsForValue().get(cacheKey);
+        WalletResponseDto cachedBalance = redisTemplate.opsForValue()
+                .get(cacheKey);
+
         if (cachedBalance != null) {
             log.info("Returning balance from Redis for user ID: {}", userId);
             usersDTO.setUsdBalance(cachedBalance.getUsdBalance());
@@ -183,22 +162,59 @@ public class UserServiceImpl implements UserService {
     private Users findUserById(Long id) {
         return usersRepository.findById(id).orElseThrow(() -> {
             log.error("User with ID: {} not found.", id);
-            return new CustomErrorException(
-                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                    ErrorCode.USER_NOT_FOUND.getMessage(),
-                    ErrorPath.GET_USER_API.getPath() + id
-            );
+            return createErrorResponse(ErrorCode.USER_NOT_FOUND);
         });
     }
 
     private Users findUserByEmail(String email) {
         return usersRepository.findByEmail(email).orElseThrow(() -> {
             log.error("Invalid email or password for email: {}", email);
-            return new CustomErrorException(
-                    ErrorCode.INVALID_EMAIL_OR_PASSWORD.getHttpStatus(),
-                    ErrorCode.INVALID_EMAIL_OR_PASSWORD.getMessage(),
-                    ErrorPath.POST_LOGIN_API.getPath()
-            );
+            return createErrorResponse(ErrorCode.INVALID_EMAIL_OR_PASSWORD);
         });
+    }
+
+    private CustomErrorException createErrorResponse(ErrorCode errorCode) {
+        return new CustomErrorException(
+                errorCode.getHttpStatus(),
+                errorCode.getMessage(),
+                ErrorPath.POST_LOGIN_API.getPath()
+        );
+    }
+
+    private AuthResponseDto authenticateUser(String email, String password) {
+        AuthRequestDto authRequest = AuthRequestDto.builder()
+                .email(email)
+                .password(password)
+                .build();
+        return authServiceClient.login(authRequest);
+    }
+
+    private OutboxRequestDto createOutboxEvent(Long userId) {
+        try {
+            // Create a map to hold the data
+            Map<String, Object> payloadMap = new HashMap<>();
+            payloadMap.put("userId", userId);
+            payloadMap.put("initialBalance", UserServiceImpl.INITIAL_BALANCE);
+
+            // Convert the map to a JSON string
+            String payload = objectMapper.writeValueAsString(payloadMap);
+
+            // Create and return the OutboxRequestDto
+            return OutboxRequestDto.builder()
+                    .aggregateId(userId.toString())  // Adjusted to String as per your Outbox entity definition
+                    .aggregateType("User")            // Set the aggregate type
+                    .eventType("USER_CREATED")         // Specify the event type
+                    .payload(payload)                  // Use the serialized JSON payload
+                    .routingKey(WalletConstants.WALLET_CREATE_ROUTING_KEY) // Routing key for the outbox event
+                    .status(EventStatus.PENDING)       // Set status to PENDING
+                    .createdAt(LocalDateTime.now())    // Set creation timestamp
+                    .sequenceNumber(1L)                // Placeholder for sequence number; update logic as needed
+                    .eventId(UUID.randomUUID().toString()) // Generate a unique event ID
+                    .build();
+        } catch (JsonProcessingException e) {
+            // Handle the exception (you could log it and rethrow or wrap in a custom exception)
+            log.error("Failed to create JSON payload for outbox event: {}", e.getMessage());
+            throw new RuntimeException("Error creating outbox event payload", e);
+        }
     }
 }
