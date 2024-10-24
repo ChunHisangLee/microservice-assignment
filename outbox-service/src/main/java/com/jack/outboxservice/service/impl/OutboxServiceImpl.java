@@ -3,15 +3,16 @@ package com.jack.outboxservice.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jack.common.constants.EventStatus;
 import com.jack.common.constants.WalletConstants;
+import com.jack.common.dto.OutboxDto;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.common.dto.response.WalletUpdateMessageDto;
-import com.jack.common.dto.OutboxDto;
 import com.jack.outboxservice.entity.Outbox;
 import com.jack.outboxservice.mapper.OutboxMapper;
 import com.jack.outboxservice.repository.OutboxRepository;
 import com.jack.outboxservice.service.OutboxService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,35 +27,39 @@ public class OutboxServiceImpl implements OutboxService {
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
+    private final OutboxMapper outboxMapper;
 
-    public OutboxServiceImpl(OutboxRepository outboxRepository, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
+    @Autowired
+    public OutboxServiceImpl(OutboxRepository outboxRepository, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper, OutboxMapper outboxMapper) {
         this.outboxRepository = outboxRepository;
         this.rabbitTemplate = rabbitTemplate;
         this.objectMapper = objectMapper;
+        this.outboxMapper = outboxMapper;
     }
+
 
     // Save an Outbox entry
     @Override
     public OutboxDto saveOutbox(OutboxDto outboxDTO) {
-        Outbox outboxEntity = OutboxMapper.INSTANCE.toEntity(outboxDTO);  // Use the mapper
+        Outbox outboxEntity = outboxMapper.toEntity(outboxDTO);
         outboxEntity.setCreatedAt(LocalDateTime.now());
-        outboxEntity.setStatus(EventStatus.PENDING);  // Set status as pending
+        outboxEntity.setStatus(EventStatus.PENDING);
 
         Outbox savedEntity = outboxRepository.save(outboxEntity);
-        return OutboxMapper.INSTANCE.toDto(savedEntity);
+        return outboxMapper.toDto(savedEntity);
     }
 
     @Override
     public Optional<OutboxDto> getOutboxById(Long id) {
         return outboxRepository.findById(id)
-                .map(OutboxMapper.INSTANCE::toDto); // Return mapped DTO or empty Optional if not found
+                .map(outboxMapper::toDto);
     }
 
     // Process unprocessed outbox messages every 5 seconds
     @Override
     @Scheduled(fixedRate = 5000)
     public void processOutbox() {
-        List<Outbox> unprocessedMessages = outboxRepository.findByStatus(EventStatus.PENDING);  // Fetch unprocessed messages
+        List<Outbox> unprocessedMessages = outboxRepository.findByStatus(EventStatus.PENDING);
 
         for (Outbox outbox : unprocessedMessages) {
             try {
@@ -67,9 +72,10 @@ public class OutboxServiceImpl implements OutboxService {
                     rabbitTemplate.convertAndSend(WalletConstants.WALLET_CREATE_ROUTING_KEY, message);
 
                     // Mark the message as processed
-                    outbox.setStatus(EventStatus.PROCESSED);  // Update status
+                    outbox.setStatus(EventStatus.PROCESSED);
                     outbox.setProcessedAt(LocalDateTime.now());
-                    outboxRepository.save(outbox);  // Update the outbox entry
+                    outboxRepository.save(outbox);
+                    log.info("Processed outbox message with ID: {}", outbox.getId());
                 } else {
                     log.warn("Payload is null for outbox entry with ID: {}", outbox.getId());
                 }
@@ -82,16 +88,14 @@ public class OutboxServiceImpl implements OutboxService {
     @Override
     public void processTransactionEvent(Long transactionId, Long userId, BigDecimal btcAmount, BigDecimal usdAmount) {
         try {
-            Outbox outbox = Outbox.builder()
-                    .eventType("WALLET_UPDATE")
-                    .routingKey(WalletConstants.WALLET_UPDATE_ROUTING_KEY)  // Use constant for routing key
-                    .payload(objectMapper.writeValueAsString(new WalletUpdateMessageDto(userId, btcAmount, usdAmount)))
-                    .createdAt(LocalDateTime.now())
-                    .status(EventStatus.PENDING)
-                    .build();
+            // Create a new WalletUpdateMessageDto to represent the event
+            WalletUpdateMessageDto updateMessage = new WalletUpdateMessageDto(userId, btcAmount, usdAmount);
 
-            outboxRepository.save(outbox);
-            log.info("Transaction event successfully processed: transactionId={}, userId={}, btcAmount={}", transactionId, userId, btcAmount);
+            // Publish the wallet update event to RabbitMQ
+            rabbitTemplate.convertAndSend(WalletConstants.WALLET_UPDATE_ROUTING_KEY, updateMessage);
+
+            // Log the transaction event
+            log.info("Transaction event successfully published: transactionId={}, userId={}, btcAmount={}", transactionId, userId, btcAmount);
         } catch (Exception e) {
             log.error("Failed to process transaction event: transactionId={}, userId={}, btcAmount={}, error={}", transactionId, userId, btcAmount, e.getMessage());
         }

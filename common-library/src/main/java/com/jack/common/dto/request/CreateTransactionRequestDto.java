@@ -11,5 +11,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CreateTransactionRequestDto {
     private Long userId;
+    private BigDecimal usdAmount;
     private BigDecimal btcAmount;
 }

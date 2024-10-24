@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 public class WalletUpdateMessageDto implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Long userId;
     private BigDecimal usdAmount;
     private BigDecimal btcAmount;

@@ -1,23 +1,20 @@
 package com.jack.walletservice.listener;
 
 import com.jack.common.constants.WalletConstants;
+import com.jack.common.dto.response.ResponseDto;
 import com.jack.common.dto.response.WalletBalanceMessageDto;
 import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.walletservice.entity.Wallet;
 import com.jack.walletservice.exception.WalletNotFoundException;
 import com.jack.walletservice.repository.WalletRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@Log4j2
 public class WalletBalanceListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(WalletBalanceListener.class);
     private final WalletRepository walletRepository;
     private final RabbitTemplate rabbitTemplate;
 
@@ -27,24 +24,21 @@ public class WalletBalanceListener {
     }
 
     @RabbitListener(queues = WalletConstants.WALLET_BALANCE_QUEUE)
-    public void handleWalletBalanceRequest(WalletBalanceMessageDto walletBalanceMessageDto, Message message) {
+    public void handleWalletBalanceRequest(WalletBalanceMessageDto walletBalanceMessageDto) {
         Long userId = walletBalanceMessageDto.getUserId();
-        logger.info("Received Wallet Balance Request for UserID: {}", userId);
+        log.info("Received Wallet Balance Request for UserID: {}", userId);
 
-        // Get the replyTo queue from the message properties
-        MessageProperties messageProperties = message.getMessageProperties();
-        String replyToQueue = messageProperties.getReplyTo();
-
-        if (replyToQueue == null) {
-            logger.error("No reply-to queue specified in the message for user ID: {}", userId);
-            return;
-        }
+        // Define a constant for the reply-to queue
+        String replyToQueue = WalletConstants.WALLET_REPLY_TO_QUEUE;
 
         // Validate userId
         if (userId == null) {
-            logger.error("Invalid Wallet Balance Request: userId is null");
-            String errorMessage = "Invalid request: userId is null";
-            rabbitTemplate.convertAndSend(replyToQueue, errorMessage);
+            log.error("Invalid Wallet Balance Request: userId is null");
+            ResponseDto<String> errorResponse = ResponseDto.<String>builder()
+                    .success(false)
+                    .error("Invalid request: userId is null")
+                    .build();
+            rabbitTemplate.convertAndSend(replyToQueue, errorResponse);
             return;
         }
 
@@ -58,20 +52,30 @@ public class WalletBalanceListener {
                     .btcBalance(wallet.getBtcBalance())
                     .build();
 
-            // Send the successful response to the replyToQueue
-            rabbitTemplate.convertAndSend(replyToQueue, responseDTO);
-            logger.info("Wallet balance sent to replyToQueue: {} for UserID: {}", replyToQueue, userId);
+            // Send the successful response to the predefined replyToQueue
+            ResponseDto<WalletResponseDto> successResponse = ResponseDto.<WalletResponseDto>builder()
+                    .success(true)
+                    .data(responseDTO)
+                    .build();
 
+            rabbitTemplate.convertAndSend(replyToQueue, successResponse);
+            log.info("Wallet balance sent to replyToQueue: {} for UserID: {}", replyToQueue, userId);
         } catch (WalletNotFoundException e) {
-            logger.error("Wallet not found for user ID: {}", userId);
+            log.error("Wallet not found for user ID: {}", userId);
             // Send an error message to the replyToQueue
-            String errorMessage = "Wallet not found for user ID: " + userId;
-            rabbitTemplate.convertAndSend(replyToQueue, errorMessage);
+            ResponseDto<String> errorResponse = ResponseDto.<String>builder()
+                    .success(false)
+                    .error("Wallet not found for user ID: " + userId)
+                    .build();
+            rabbitTemplate.convertAndSend(replyToQueue, errorResponse);
         } catch (Exception e) {
-            logger.error("Failed to retrieve wallet balance for user ID: {}. Error: {}", userId, e.getMessage(), e);
+            log.error("Failed to retrieve wallet balance for user ID: {}. Error: {}", userId, e.getMessage(), e);
             // Send a generic error message to the replyToQueue
-            String errorMessage = "Failed to retrieve wallet balance for user ID: " + userId;
-            rabbitTemplate.convertAndSend(replyToQueue, errorMessage);
+            ResponseDto<String> errorResponse = ResponseDto.<String>builder()
+                    .success(false)
+                    .error("Failed to retrieve wallet balance for user ID: " + userId)
+                    .build();
+            rabbitTemplate.convertAndSend(replyToQueue, errorResponse);
         }
     }
 }

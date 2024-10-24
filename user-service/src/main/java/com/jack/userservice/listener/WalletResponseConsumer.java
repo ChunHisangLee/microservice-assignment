@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Log4j2
-public class WalletBalanceResponseListener {
+public class WalletResponseConsumer {
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
 
-    public WalletBalanceResponseListener(RedisTemplate<String, WalletResponseDto> redisTemplate) {
+    public WalletResponseConsumer(RedisTemplate<String, WalletResponseDto> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

@@ -44,6 +44,7 @@ public class Outbox {
     private Long sequenceNumber;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(name = "status", nullable = false)
     private EventStatus status = EventStatus.PENDING; // Default to PENDING
 
@@ -56,6 +57,6 @@ public class Outbox {
     @Column(name = "event_id", nullable = false, unique = true, length = 36)
     private String eventId;
 
-    @Column(name = "routing_key", nullable = false, length = 255) // Added routing key field
+    @Column(name = "routing_key", nullable = false)
     private String routingKey; // Routing key for the outbox event
 }

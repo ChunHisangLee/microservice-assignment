@@ -3,32 +3,38 @@ package com.jack.walletservice.listener;
 import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletCreateMessageDto;
 import com.jack.walletservice.service.WalletService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@Log4j2
 public class WalletCreateListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(WalletCreateListener.class);
     private final WalletService walletService;
 
+    @Autowired
     public WalletCreateListener(WalletService walletService) {
         this.walletService = walletService;
     }
 
     // Listen to the queue for wallet creation messages
     @RabbitListener(queues = WalletConstants.WALLET_CREATE_QUEUE)
-    public void handleWalletCreation(WalletCreateMessageDto message) {
-        logger.info("Received Wallet Creation message for user ID: {}", message.getUserId());
+    public void handleWalletCreation(WalletCreateMessageDto walletCreateMessageDto) {
+        log.info("Received Wallet Creation message for user ID: {}", walletCreateMessageDto.getUserId());
 
         try {
+            // Validate message
+            if (walletCreateMessageDto.getUserId() == null) {
+                log.warn("User ID is null for wallet creation message");
+                return;
+            }
+
             // Delegate the wallet creation to WalletService's createWallet method
-            walletService.createWallet(message);
-            logger.info("Wallet created successfully for user ID: {}", message.getUserId());
+            walletService.createWallet(walletCreateMessageDto);
+            log.info("Wallet created successfully for user ID: {}", walletCreateMessageDto.getUserId());
         } catch (Exception e) {
-            logger.error("Failed to process wallet creation message for user ID: {}. Error: {}", message.getUserId(), e.getMessage(), e);
+            log.error("Failed to process wallet creation message for user ID: {}. Error: {}", walletCreateMessageDto.getUserId(), e.getMessage(), e);
         }
     }
 }
