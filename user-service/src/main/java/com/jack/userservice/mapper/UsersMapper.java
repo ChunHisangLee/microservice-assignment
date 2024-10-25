@@ -1,5 +1,6 @@
 package com.jack.userservice.mapper;
 
+import com.jack.userservice.dto.UserResponseDto;
 import com.jack.userservice.dto.UsersDto;
 import com.jack.userservice.entity.Users;
 import org.mapstruct.Mapper;
@@ -14,4 +15,7 @@ public interface UsersMapper {
     @Mapping(target = "usdBalance", ignore = true)
     @Mapping(target = "btcBalance", ignore = true)
     UsersDto toDto(Users user);
+
+    @Mapping(target = "token", ignore = true)
+    UserResponseDto toResponseDto(Users user);
 }

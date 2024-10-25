@@ -1,4 +1,4 @@
-package com.jack.common.dto.response;
+package com.jack.userservice.dto;
 
 import lombok.*;
 

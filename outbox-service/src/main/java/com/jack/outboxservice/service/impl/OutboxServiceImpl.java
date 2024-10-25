@@ -10,9 +10,9 @@ import com.jack.outboxservice.entity.Outbox;
 import com.jack.outboxservice.mapper.OutboxMapper;
 import com.jack.outboxservice.repository.OutboxRepository;
 import com.jack.outboxservice.service.OutboxService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,21 +22,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 @Log4j2
 public class OutboxServiceImpl implements OutboxService {
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
     private final OutboxMapper outboxMapper;
-
-    @Autowired
-    public OutboxServiceImpl(OutboxRepository outboxRepository, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper, OutboxMapper outboxMapper) {
-        this.outboxRepository = outboxRepository;
-        this.rabbitTemplate = rabbitTemplate;
-        this.objectMapper = objectMapper;
-        this.outboxMapper = outboxMapper;
-    }
-
 
     // Save an Outbox entry
     @Override

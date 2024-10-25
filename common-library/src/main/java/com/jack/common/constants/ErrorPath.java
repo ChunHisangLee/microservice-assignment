@@ -12,14 +12,15 @@ public enum ErrorPath {
     // --- User-related APIs ---
     GET_USER_API(10001, "GET /api/users/{userId}", HttpStatus.BAD_REQUEST),
     POST_USER_API(10002, "POST /api/users", HttpStatus.NOT_FOUND),
-    PUT_USER_API(10003, "PUT /api/users/{userId}", HttpStatus.BAD_REQUEST),
+    PUT_UPDATE_USER_API(10003, "PUT /api/users/{id}", HttpStatus.BAD_REQUEST),
     DELETE_USER_API(10004, "DELETE /api/users/{userId}", HttpStatus.BAD_REQUEST),
     POST_LOGIN_API(10005, "POST /api/users/login", HttpStatus.NOT_FOUND),
     GET_LOGOUT_API(10006, "GET /api/users/logout", HttpStatus.UNAUTHORIZED),
     POST_REGISTER_API(10007, "POST /api/users/register", HttpStatus.BAD_REQUEST),
     POST_VERIFY_PASSWORD_API(10008, "POST /api/users/verify-password", HttpStatus.BAD_REQUEST),
     POST_LOGOUT_API(10009, "POST /api/users/logout", HttpStatus.INTERNAL_SERVER_ERROR),
-    GET_WALLET_BALANCE_API(10010, "GET /api/users/{userId}/balance", HttpStatus.BAD_REQUEST),
+    GET_WALLET_BALANCE_API(10010, "GET /api/wallet/{userId}/balance", HttpStatus.BAD_REQUEST),
+    GET_USER_BALANCE_API(10011, "GET /api/users/{userId}/balance", HttpStatus.BAD_REQUEST),
 
     // --- Transaction-related APIs ---
     POST_TRANSACTION_API(10011, "POST /api/transactions", HttpStatus.BAD_REQUEST),
@@ -58,6 +59,9 @@ public enum ErrorPath {
     REFRESH_TOKEN_API(10032, "POST /api/auth/refresh-token", HttpStatus.UNAUTHORIZED),
     FORGOT_PASSWORD_API(10033, "POST /api/auth/forgot-password", HttpStatus.BAD_REQUEST),
     RESET_PASSWORD_API(10034, "POST /api/auth/reset-password", HttpStatus.BAD_REQUEST),
+
+    // --- Outbox-related APIs ---
+    OUTBOX_EVENT_API(10032, "POST /api/user/register", HttpStatus.BAD_REQUEST),
 
     // --- System-related APIs ---
     HEALTH_CHECK_API(10035, "GET /api/system/health", HttpStatus.SERVICE_UNAVAILABLE),

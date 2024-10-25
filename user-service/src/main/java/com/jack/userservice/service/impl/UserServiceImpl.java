@@ -7,18 +7,20 @@ import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.request.OutboxRequestDto;
 import com.jack.common.dto.request.UserRegistrationRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
-import com.jack.common.dto.response.UserResponseDto;
 import com.jack.common.dto.response.WalletResponseDto;
 import com.jack.common.exception.CustomErrorException;
 import com.jack.userservice.client.AuthServiceClient;
 import com.jack.userservice.client.OutboxServiceClient;
 import com.jack.userservice.client.WalletBalanceRequestSender;
 import com.jack.userservice.client.WalletServiceClient;
+import com.jack.userservice.dto.UserResponseDto;
+import com.jack.userservice.dto.UserUpdateRequestDto;
 import com.jack.userservice.dto.UsersDto;
 import com.jack.userservice.entity.Users;
 import com.jack.userservice.mapper.UsersMapper;
 import com.jack.userservice.repository.UsersRepository;
 import com.jack.userservice.service.UserService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -46,18 +48,21 @@ public class UserServiceImpl implements UserService {
     private final OutboxServiceClient outboxServiceClient;
     private final WalletServiceClient walletServiceClient;
     private final WalletBalanceRequestSender walletBalanceRequestSender;
+    private final ObjectMapper objectMapper;
     private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(1000.00);
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     @Transactional
     public UserResponseDto register(UserRegistrationRequestDto registrationDto) {
+        log.info("Attempting to register user with email: {}", registrationDto.getEmail());
+
         if (usersRepository.findByEmail(registrationDto.getEmail()).isPresent()) {
             log.error("User registration failed. User with email '{}' already exists", registrationDto.getEmail());
             throw createErrorResponse(ErrorCode.MAIL_ALREADY_EXISTS);
         }
 
         String encodedPassword = passwordEncoder.encode(registrationDto.getPassword());
+
         Users newUser = Users.builder()
                 .name(registrationDto.getName())
                 .email(registrationDto.getEmail())
@@ -65,6 +70,9 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         Users savedUser = usersRepository.save(newUser);
+        log.info("User registered successfully with ID: {}", savedUser.getId());
+
+        // Authenticate user to get token
         AuthResponseDto authResponse = authenticateUser(savedUser.getEmail(), registrationDto.getPassword());
 
         // Prepare and send the outbox event via the outbox service
@@ -81,46 +89,62 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Optional<Users> updateUser(Long id, Users users) {
+    public Optional<UserResponseDto> updateUser(Long id, UserUpdateRequestDto userUpdateRequestDto) {
         log.info("Attempting to update user with ID: {}", id);
+
         Users existingUser = findUserById(id);
 
-        if (usersRepository.findByEmail(users.getEmail()).filter(user -> !user.getId().equals(id)).isPresent()) {
-            log.error("Email {} is already registered by another user.", users.getEmail());
+        if (userUpdateRequestDto.getEmail() != null && usersRepository.findByEmail(userUpdateRequestDto.getEmail())
+                .filter(user -> !user.getId().equals(id))
+                .isPresent()) {
+            log.error("Email {} is already registered by another user.", userUpdateRequestDto.getEmail());
             throw createErrorResponse(ErrorCode.MAIL_ALREADY_EXISTS);
         }
 
-        existingUser.setName(users.getName());
-        existingUser.setEmail(users.getEmail());
+        // Update user details
+        if (userUpdateRequestDto.getName() != null) {
+            existingUser.setName(userUpdateRequestDto.getName());
+        }
 
-        if (users.getPassword() != null && !users.getPassword().isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(users.getPassword());
+        if (userUpdateRequestDto.getPassword() != null && !userUpdateRequestDto.getPassword().isEmpty()) {
+            String encodedPassword = passwordEncoder.encode(userUpdateRequestDto.getPassword());
             existingUser.setPassword(encodedPassword);
             log.debug("Password updated for user with ID: {}", id);
         }
 
         Users updatedUser = usersRepository.save(existingUser);
         log.info("User with ID: {} updated successfully.", id);
-        return Optional.of(updatedUser);
+
+        // Map to UserResponseDto
+        UserResponseDto userResponseDto = usersMapper.toResponseDto(updatedUser);
+
+        return Optional.of(userResponseDto);
     }
 
     @Override
     @Transactional
     public void deleteUser(Long id) {
         log.info("Attempting to delete user with ID: {}", id);
+
         Users user = findUserById(id);
         usersRepository.delete(user);
         log.info("User with ID: {} deleted successfully.", id);
     }
 
     @Override
-    public boolean verifyPassword(String email, String rawPassword) {
+    public boolean isPasswordValid(String email, String rawPassword) {
+        log.debug("Verifying password for email: {}", email);
+
         Users user = findUserByEmail(email);
-        return passwordEncoder.matches(rawPassword, user.getPassword());
+        boolean isValid = passwordEncoder.matches(rawPassword, user.getPassword());
+        log.debug("Password verification for email {}: {}", email, isValid);
+        return isValid;
     }
 
     @Override
-    public UsersDto getUserWithBalance(Long userId) {
+    public Optional<UsersDto> getUserWithBalance(Long userId) {
+        log.info("Retrieving user with balance for user ID: {}", userId);
+
         Users user = findUserById(userId);
         UsersDto usersDTO = usersMapper.toDto(user);
         String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + userId;
@@ -133,7 +157,7 @@ public class UserServiceImpl implements UserService {
             log.info("Returning balance from Redis for user ID: {}", userId);
             usersDTO.setUsdBalance(cachedBalance.getUsdBalance());
             usersDTO.setBtcBalance(cachedBalance.getBtcBalance());
-            return usersDTO;
+            return Optional.of(usersDTO);
         }
 
         // Step 2: If not in cache, try fetching from wallet-service via Feign
@@ -143,19 +167,20 @@ public class UserServiceImpl implements UserService {
             usersDTO.setBtcBalance(walletBalance.getBtcBalance());
 
             // Cache the balance in Redis for future requests
-            redisTemplate.opsForValue().set(cacheKey, walletBalance, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);
+            redisTemplate.opsForValue()
+                    .set(cacheKey, walletBalance, TransactionConstants.TRANSACTION_CACHE_TTL, TimeUnit.MINUTES);
             log.info("Balance for user ID {} cached in Redis.", userId);
-            return usersDTO;
+            return Optional.of(usersDTO);
         } catch (Exception e) {
-            log.warn("Feign call failed for user ID {}. Sending async request to wallet-service via RabbitMQ.", userId);
+            log.warn("Feign call failed for user ID {}. Sending async request to wallet-service via RabbitMQ. Error: {}", userId, e.getMessage());
 
             // Step 3: If Feign fails, send balance request asynchronously via RabbitMQ
             walletBalanceRequestSender.sendBalanceRequest(userId);
 
-            // Optionally, return partial data and wait for the async response to arrive
-            usersDTO.setUsdBalance(BigDecimal.ZERO);  // Default/fallback values
-            usersDTO.setBtcBalance(BigDecimal.ZERO);
-            return usersDTO;
+            // Return user data with a note that balance is being fetched
+            usersDTO.setUsdBalance(null); // Indicate that balance is being fetched
+            usersDTO.setBtcBalance(null);
+            return Optional.of(usersDTO);
         }
     }
 
@@ -186,7 +211,19 @@ public class UserServiceImpl implements UserService {
                 .email(email)
                 .password(password)
                 .build();
-        return authServiceClient.login(authRequest);
+
+        try {
+            AuthResponseDto authResponse = authServiceClient.login(authRequest);
+            log.info("User with email: {} authenticated successfully.", email);
+            return authResponse;
+        } catch (FeignException e) {
+            log.error("Authentication failed for email: {}. Error: {}", email, e.getMessage());
+            throw new CustomErrorException(
+                    ErrorCode.AUTHENTICATION_FAILED.getHttpStatus(),
+                    ErrorCode.AUTHENTICATION_FAILED.getMessage(),
+                    ErrorPath.POST_LOGIN_API.getPath()
+            );
+        }
     }
 
     private OutboxRequestDto createOutboxEvent(Long userId) {
@@ -214,7 +251,11 @@ public class UserServiceImpl implements UserService {
         } catch (JsonProcessingException e) {
             // Handle the exception (you could log it and rethrow or wrap in a custom exception)
             log.error("Failed to create JSON payload for outbox event: {}", e.getMessage());
-            throw new RuntimeException("Error creating outbox event payload", e);
+            throw new CustomErrorException(
+                    ErrorCode.OUTBOX_EVENT_CREATION_FAILED.getHttpStatus(),
+                    ErrorCode.OUTBOX_EVENT_CREATION_FAILED.getMessage(),
+                    ErrorPath.OUTBOX_EVENT_API.getPath()
+            );
         }
     }
 }
