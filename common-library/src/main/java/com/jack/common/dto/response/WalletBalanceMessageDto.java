@@ -2,13 +2,18 @@ package com.jack.common.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+import java.io.Serial;
+import java.io.Serializable;
+
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-public class WalletBalanceMessageDto {
+public class WalletBalanceMessageDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long userId;
 }

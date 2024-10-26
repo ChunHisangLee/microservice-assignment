@@ -1,17 +1,23 @@
 package com.jack.transactionservice.dto;
 
 import com.jack.transactionservice.entity.TransactionType;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TransactionDto {
+public class TransactionDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long id;
     private Long userId;
     private Long btcPriceHistoryId;

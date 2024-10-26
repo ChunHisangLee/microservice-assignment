@@ -1,36 +1,21 @@
 package com.jack.common.exception;
 
-import org.springframework.http.HttpStatus;
+import com.jack.common.constants.ErrorCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@Getter
+@RequiredArgsConstructor
 public class CustomErrorException extends RuntimeException {
     private final int statusCode;
     private final String status;
-    private final String message;
     private final String path;
 
-    // Accept HttpStatus instead of separate status code and status
-    public CustomErrorException(HttpStatus httpStatus, String message, String path) {
-        super(message);
-        this.statusCode = httpStatus.value();
-        this.status = httpStatus.getReasonPhrase();
-        this.message = message;
+    // Constructor to initialize fields directly from ErrorCode
+    public CustomErrorException(ErrorCode errorCode, String path) {
+        super(errorCode.getMessage());
+        this.statusCode = errorCode.getHttpStatus().value();
+        this.status = errorCode.getHttpStatus().getReasonPhrase();
         this.path = path;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    public String getPath() {
-        return path;
     }
 }

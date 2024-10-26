@@ -10,6 +10,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(20002, "User not found.", HttpStatus.NOT_FOUND),
     USER_NOT_ACTIVE(20003, "User not active.", HttpStatus.BAD_REQUEST),
     INVALID_EMAIL_OR_PASSWORD(20004, "Invalid email or password.", HttpStatus.BAD_REQUEST),
+    INVALID_TOKEN(20005,  "Invalid or expired token.", HttpStatus.UNAUTHORIZED),
 
     // --- Wallet-related Errors ---
     WALLET_ALREADY_EXISTS(20011, "Wallet already exists.", HttpStatus.BAD_REQUEST),

@@ -1,15 +1,21 @@
 package com.jack.common.dto.request;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
-@Getter
-@Setter
+@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class CreateTransactionRequestDto {
+@AllArgsConstructor
+public class CreateTransactionRequestDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long userId;
     private BigDecimal usdAmount;
     private BigDecimal btcAmount;

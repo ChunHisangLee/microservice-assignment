@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
 
         if (usersRepository.findByEmail(registrationDto.getEmail()).isPresent()) {
             log.error("User registration failed. User with email '{}' already exists", registrationDto.getEmail());
-            throw createErrorResponse(ErrorCode.MAIL_ALREADY_EXISTS);
+            throw new CustomErrorException(ErrorCode.MAIL_ALREADY_EXISTS, ErrorPath.POST_REGISTER_API.getPath());
         }
 
         String encodedPassword = passwordEncoder.encode(registrationDto.getPassword());
@@ -107,11 +107,7 @@ public class UserServiceImpl implements UserService {
             existingUserDto = usersRedisService.getUserFromRedis(id);
         } catch (Exception e) {
             log.error("User with ID {} not found in updateUser", id);
-            throw new CustomErrorException(
-                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                    ErrorCode.USER_NOT_FOUND.getMessage(),
-                    ErrorPath.PUT_UPDATE_USER_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.USER_NOT_FOUND, ErrorPath.PUT_UPDATE_USER_API.getPath());
         }
 
         // Convert the DTO to entity for updates
@@ -121,7 +117,7 @@ public class UserServiceImpl implements UserService {
                 .filter(user -> !user.getId().equals(id))
                 .isPresent()) {
             log.error("Email {} is already registered by another user.", userUpdateRequestDto.getEmail());
-            throw createErrorResponse(ErrorCode.MAIL_ALREADY_EXISTS);
+            throw new CustomErrorException(ErrorCode.MAIL_ALREADY_EXISTS, ErrorPath.PUT_UPDATE_USER_API.getPath());
         }
 
         // Update user details
@@ -179,11 +175,7 @@ public class UserServiceImpl implements UserService {
             usersDTO = usersRedisService.getUserFromRedis(userId);
         } catch (Exception e) {
             log.error("User with ID {} not found in getUserWithBalance", userId);
-            throw new CustomErrorException(
-                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                    ErrorCode.USER_NOT_FOUND.getMessage(),
-                    ErrorPath.GET_USER_BALANCE_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.USER_NOT_FOUND, ErrorPath.GET_USER_BALANCE_API.getPath());
         }
 
         String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + userId;
@@ -226,16 +218,8 @@ public class UserServiceImpl implements UserService {
     private Users findUserByEmail(String email) {
         return usersRepository.findByEmail(email).orElseThrow(() -> {
             log.error("Invalid email or password for email: {}", email);
-            return createErrorResponse(ErrorCode.INVALID_EMAIL_OR_PASSWORD);
+            return new CustomErrorException(ErrorCode.INVALID_EMAIL_OR_PASSWORD, ErrorPath.POST_VERIFY_PASSWORD_API.getPath());
         });
-    }
-
-    private CustomErrorException createErrorResponse(ErrorCode errorCode) {
-        return new CustomErrorException(
-                errorCode.getHttpStatus(),
-                errorCode.getMessage(),
-                ErrorPath.POST_LOGIN_API.getPath()
-        );
     }
 
     private AuthResponseDto authenticateUser(String email, String password) {
@@ -250,11 +234,7 @@ public class UserServiceImpl implements UserService {
             return authResponse;
         } catch (FeignException e) {
             log.error("Authentication failed for email: {}. Error: {}", email, e.getMessage());
-            throw new CustomErrorException(
-                    ErrorCode.AUTHENTICATION_FAILED.getHttpStatus(),
-                    ErrorCode.AUTHENTICATION_FAILED.getMessage(),
-                    ErrorPath.POST_LOGIN_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.AUTHENTICATION_FAILED, ErrorPath.POST_LOGIN_API.getPath());
         }
     }
 
@@ -283,11 +263,7 @@ public class UserServiceImpl implements UserService {
         } catch (JsonProcessingException e) {
             // Handle the exception (you could log it and rethrow or wrap in a custom exception)
             log.error("Failed to create JSON payload for outbox event: {}", e.getMessage());
-            throw new CustomErrorException(
-                    ErrorCode.OUTBOX_EVENT_CREATION_FAILED.getHttpStatus(),
-                    ErrorCode.OUTBOX_EVENT_CREATION_FAILED.getMessage(),
-                    ErrorPath.OUTBOX_EVENT_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.OUTBOX_EVENT_CREATION_FAILED, ErrorPath.OUTBOX_EVENT_API.getPath());
         }
     }
 }

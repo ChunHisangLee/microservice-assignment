@@ -1,16 +1,20 @@
 package com.jack.common.dto.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-@Getter
-@Setter
+@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class WalletResponseDto implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Long userId;
     private BigDecimal usdBalance;

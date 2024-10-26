@@ -3,13 +3,22 @@ package com.jack.common.dto.response;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+import java.io.Serial;
+import java.io.Serializable;
+
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-public class UserRegistrationResponseDto {
+public class UserRegistrationResponseDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     @NotBlank(message = "Name cannot be blank")
     private String name;
 

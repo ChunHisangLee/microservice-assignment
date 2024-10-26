@@ -1,13 +1,20 @@
 package com.jack.common.dto.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+import java.io.Serial;
+import java.io.Serializable;
+
+@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class ResponseDto<T> {
+@AllArgsConstructor
+public class ResponseDto<T> implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private boolean success; // Indicates if the operation was successful
     private T data;         // The data object (e.g., WalletResponseDto)
     private String error;   // Error message if the operation failed

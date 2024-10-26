@@ -2,18 +2,20 @@ package com.jack.userservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsersDto {
+public class UsersDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long id;
     private String name;
     private String email;

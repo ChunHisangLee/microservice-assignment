@@ -2,14 +2,19 @@ package com.jack.common.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+import java.io.Serial;
+import java.io.Serializable;
+
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-public class AuthRequestDto {
+public class AuthRequestDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private String email;
     private String password;
 }

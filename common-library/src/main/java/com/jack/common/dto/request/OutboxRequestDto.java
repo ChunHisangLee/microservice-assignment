@@ -1,16 +1,22 @@
 package com.jack.common.dto.request;
 
 import com.jack.common.constants.EventStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutboxRequestDto {
+public class OutboxRequestDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long id;                      // The unique identifier for the outbox entry
     private String aggregateType;         // The type of aggregate (e.g., Users, Order)
     private String aggregateId;           // The unique identifier of the aggregate instance

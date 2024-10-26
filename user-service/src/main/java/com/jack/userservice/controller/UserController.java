@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -65,11 +66,7 @@ public class UserController {
 
         if (!userService.isPasswordValid(loginRequest.getEmail(), loginRequest.getPassword())) {
             log.warn("Invalid credentials for email: {}", loginRequest.getEmail());
-            throw new CustomErrorException(
-                    ErrorCode.INVALID_EMAIL_OR_PASSWORD.getHttpStatus(),
-                    ErrorCode.INVALID_EMAIL_OR_PASSWORD.getMessage(),
-                    ErrorPath.POST_LOGIN_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.INVALID_EMAIL_OR_PASSWORD, ErrorPath.POST_LOGIN_API.getPath());
         }
 
         try {
@@ -78,11 +75,7 @@ public class UserController {
             return ResponseEntity.ok(authResponse);
         } catch (FeignException e) {
             log.error("Error during login via auth-service: {}", e.getMessage());
-            throw new CustomErrorException(
-                    ErrorCode.LOGOUT_SERVICE_ERROR.getHttpStatus(),
-                    ErrorCode.LOGOUT_SERVICE_ERROR.getMessage(),
-                    ErrorPath.POST_LOGIN_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.LOGOUT_SERVICE_ERROR, ErrorPath.POST_LOGIN_API.getPath());
         }
     }
 
@@ -100,19 +93,11 @@ public class UserController {
                         .build();
             } catch (FeignException e) {
                 log.error("Error during logout via auth-service: {}", e.getMessage());
-                throw new CustomErrorException(
-                        ErrorCode.LOGOUT_SERVICE_ERROR.getHttpStatus(),
-                        ErrorCode.LOGOUT_SERVICE_ERROR.getMessage(),
-                        ErrorPath.GET_LOGOUT_API.getPath()
-                );
+                throw new CustomErrorException(ErrorCode.LOGOUT_SERVICE_ERROR, ErrorPath.GET_LOGOUT_API.getPath());
             }
         } else {
             log.warn("No valid JWT token found in request for logout.");
-            throw new CustomErrorException(
-                    ErrorCode.NO_VALID_TOKEN.getHttpStatus(),
-                    ErrorCode.NO_VALID_TOKEN.getMessage(),
-                    ErrorPath.GET_LOGOUT_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.NO_VALID_TOKEN, ErrorPath.GET_LOGOUT_API.getPath());
         }
     }
 
@@ -122,11 +107,7 @@ public class UserController {
 
         if (userWithBalanceOpt.isEmpty()) {
             log.warn("User not found with ID in getUserWithBalance: {}", userId);
-            throw new CustomErrorException(
-                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                    ErrorCode.USER_NOT_FOUND.getMessage(),
-                    ErrorPath.GET_USER_BALANCE_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.USER_NOT_FOUND, ErrorPath.GET_USER_BALANCE_API.getPath());
         }
 
         UsersDto userWithBalance = userWithBalanceOpt.get();
@@ -135,7 +116,15 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) throws Exception {
+    public ResponseEntity<UserResponseDto> updateUser(
+            @PathVariable Long id,
+            @RequestBody UserUpdateRequestDto userUpdateRequestDto,
+            @RequestHeader(SecurityConstants.AUTHORIZATION_HEADER) String token) throws Exception {
+        // Validate token before calling the service
+        if (!authServiceClient.validateToken(token, id)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         Optional<UserResponseDto> updatedUserOpt = userService.updateUser(id, userUpdateRequestDto);
 
         return updatedUserOpt.map(updatedUser -> {
@@ -143,11 +132,7 @@ public class UserController {
             return ResponseEntity.ok(updatedUser);
         }).orElseThrow(() -> {
             log.warn("User not found with ID in updateUser: {}", id);
-            return new CustomErrorException(
-                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                    ErrorCode.USER_NOT_FOUND.getMessage(),
-                    ErrorPath.PUT_UPDATE_USER_API.getPath()
-            );
+            return new CustomErrorException(ErrorCode.USER_NOT_FOUND, ErrorPath.PUT_UPDATE_USER_API.getPath());
         });
     }
 
@@ -159,11 +144,7 @@ public class UserController {
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             log.warn("Attempted to delete non-existent user with ID: {}", id);
-            throw new CustomErrorException(
-                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
-                    ErrorCode.USER_NOT_FOUND.getMessage(),
-                    ErrorPath.DELETE_USER_API.getPath()
-            );
+            throw new CustomErrorException(ErrorCode.USER_NOT_FOUND, ErrorPath.DELETE_USER_API.getPath());
         }
     }
 

@@ -3,14 +3,21 @@ package com.jack.common.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+import java.io.Serial;
+import java.io.Serializable;
+
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRegistrationRequestDto {
+public class UserRegistrationRequestDto implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     @NotBlank(message = "Name cannot be blank")
     @Size(max = 100, message = "Name must be less than or equal to 100 characters")
     private String name;
