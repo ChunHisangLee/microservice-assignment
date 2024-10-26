@@ -20,6 +20,7 @@ import com.jack.userservice.entity.Users;
 import com.jack.userservice.mapper.UsersMapper;
 import com.jack.userservice.repository.UsersRepository;
 import com.jack.userservice.service.UserService;
+import com.jack.userservice.service.UsersRedisService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -49,6 +50,7 @@ public class UserServiceImpl implements UserService {
     private final WalletServiceClient walletServiceClient;
     private final WalletBalanceRequestSender walletBalanceRequestSender;
     private final ObjectMapper objectMapper;
+    private final UsersRedisService usersRedisService;
     private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(1000.00);
 
     @Override
@@ -69,7 +71,13 @@ public class UserServiceImpl implements UserService {
                 .password(encodedPassword)
                 .build();
 
+        // Save to a database
         Users savedUser = usersRepository.save(newUser);
+
+        // Convert to DTO and cache in Redis
+        UsersDto userDto = usersMapper.toDto(savedUser);
+        usersRedisService.saveUserToRedis(userDto); // Cache only
+
         log.info("User registered successfully with ID: {}", savedUser.getId());
 
         // Authenticate user to get token
@@ -92,7 +100,22 @@ public class UserServiceImpl implements UserService {
     public Optional<UserResponseDto> updateUser(Long id, UserUpdateRequestDto userUpdateRequestDto) {
         log.info("Attempting to update user with ID: {}", id);
 
-        Users existingUser = findUserById(id);
+        UsersDto existingUserDto;
+
+        try {
+            // Use getUserFromRedis to fetch user, checking Redis first
+            existingUserDto = usersRedisService.getUserFromRedis(id);
+        } catch (Exception e) {
+            log.error("User with ID {} not found in updateUser", id);
+            throw new CustomErrorException(
+                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
+                    ErrorCode.USER_NOT_FOUND.getMessage(),
+                    ErrorPath.PUT_UPDATE_USER_API.getPath()
+            );
+        }
+
+        // Convert the DTO to entity for updates
+        Users existingUser = usersMapper.toEntity(existingUserDto);
 
         if (userUpdateRequestDto.getEmail() != null && usersRepository.findByEmail(userUpdateRequestDto.getEmail())
                 .filter(user -> !user.getId().equals(id))
@@ -115,6 +138,10 @@ public class UserServiceImpl implements UserService {
         Users updatedUser = usersRepository.save(existingUser);
         log.info("User with ID: {} updated successfully.", id);
 
+        // Update the cache
+        UsersDto updatedUserDto = usersMapper.toDto(updatedUser);
+        usersRedisService.saveUserToRedis(updatedUserDto);
+
         // Map to UserResponseDto
         UserResponseDto userResponseDto = usersMapper.toResponseDto(updatedUser);
 
@@ -126,8 +153,9 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         log.info("Attempting to delete user with ID: {}", id);
 
-        Users user = findUserById(id);
-        usersRepository.delete(user);
+        // Delete user from database and invalidate cache
+        usersRepository.deleteById(id);
+        usersRedisService.deleteUserFromRedis(id);
         log.info("User with ID: {} deleted successfully.", id);
     }
 
@@ -145,8 +173,19 @@ public class UserServiceImpl implements UserService {
     public Optional<UsersDto> getUserWithBalance(Long userId) {
         log.info("Retrieving user with balance for user ID: {}", userId);
 
-        Users user = findUserById(userId);
-        UsersDto usersDTO = usersMapper.toDto(user);
+        UsersDto usersDTO;
+
+        try {
+            usersDTO = usersRedisService.getUserFromRedis(userId);
+        } catch (Exception e) {
+            log.error("User with ID {} not found in getUserWithBalance", userId);
+            throw new CustomErrorException(
+                    ErrorCode.USER_NOT_FOUND.getHttpStatus(),
+                    ErrorCode.USER_NOT_FOUND.getMessage(),
+                    ErrorPath.GET_USER_BALANCE_API.getPath()
+            );
+        }
+
         String cacheKey = WalletConstants.WALLET_CACHE_PREFIX + userId;
 
         // Step 1: Try getting balance from Redis cache first
@@ -182,13 +221,6 @@ public class UserServiceImpl implements UserService {
             usersDTO.setBtcBalance(null);
             return Optional.of(usersDTO);
         }
-    }
-
-    private Users findUserById(Long id) {
-        return usersRepository.findById(id).orElseThrow(() -> {
-            log.error("User with ID: {} not found.", id);
-            return createErrorResponse(ErrorCode.USER_NOT_FOUND);
-        });
     }
 
     private Users findUserByEmail(String email) {

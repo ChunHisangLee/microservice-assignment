@@ -8,7 +8,7 @@ public interface UsersRedisService {
     void saveUserToRedis(UsersDto user);
 
     // Retrieve UserDTO from Redis
-    UsersDto getUserFromRedis(Long userId);
+    UsersDto getUserFromRedis(Long userId) throws Exception;
 
     // Delete UserDTO from Redis
     void deleteUserFromRedis(Long userId);

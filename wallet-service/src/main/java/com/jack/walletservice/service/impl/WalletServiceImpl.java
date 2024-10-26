@@ -40,8 +40,8 @@ public class WalletServiceImpl implements WalletService {
 
         Wallet wallet = new Wallet();
         wallet.setUserId(message.getUserId());
-        wallet.setUsdBalance(message.getInitialBalance());
-        wallet.setBtcBalance(BigDecimal.valueOf(0.0));
+        wallet.setUsdBalance(message.getUsdAmount());
+        wallet.setBtcBalance(message.getBtcAmount());
         wallet = walletRepository.save(wallet);
         updateCacheAndNotify(wallet);
         logger.info("Wallet created successfully for user ID: {}", message.getUserId());

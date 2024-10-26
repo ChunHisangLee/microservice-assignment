@@ -117,7 +117,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/balance")
-    public ResponseEntity<UsersDto> getUserWithBalance(@PathVariable Long userId) {
+    public ResponseEntity<UsersDto> getUserWithBalance(@PathVariable Long userId) throws Exception {
         Optional<UsersDto> userWithBalanceOpt = userService.getUserWithBalance(userId);
 
         if (userWithBalanceOpt.isEmpty()) {
@@ -135,7 +135,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) {
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) throws Exception {
         Optional<UserResponseDto> updatedUserOpt = userService.updateUser(id, userUpdateRequestDto);
 
         return updatedUserOpt.map(updatedUser -> {

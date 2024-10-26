@@ -10,11 +10,11 @@ import java.util.Optional;
 public interface UserService {
     UserResponseDto register(UserRegistrationRequestDto userRegistrationRequestDto);
 
-    Optional<UserResponseDto> updateUser(Long id, UserUpdateRequestDto userUpdateRequestDto);
+    Optional<UserResponseDto> updateUser(Long id, UserUpdateRequestDto userUpdateRequestDto) throws Exception;
 
     void deleteUser(Long id);
 
     boolean isPasswordValid(String email, String rawPassword);
 
-    Optional<UsersDto> getUserWithBalance(Long userId);
+    Optional<UsersDto> getUserWithBalance(Long userId) throws Exception;
 }

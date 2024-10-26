@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -13,5 +13,5 @@ import java.time.LocalDateTime;
 public class BTCPriceHistoryDto {
     private Long id;
     private BigDecimal price;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 }
