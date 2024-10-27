@@ -3,6 +3,7 @@ package com.jack.userservice.listener;
 import com.jack.common.constants.TransactionConstants;
 import com.jack.common.constants.WalletConstants;
 import com.jack.common.dto.response.WalletResponseDto;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,13 +12,10 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 @Log4j2
 public class WalletResponseConsumer {
     private final RedisTemplate<String, WalletResponseDto> redisTemplate;
-
-    public WalletResponseConsumer(RedisTemplate<String, WalletResponseDto> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
 
     @RabbitListener(queues = WalletConstants.WALLET_REPLY_TO_QUEUE)
     public void handleWalletBalanceResponse(WalletResponseDto walletResponse) {

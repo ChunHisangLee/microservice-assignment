@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
@@ -14,13 +15,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@RequiredArgsConstructor
 @Log4j2
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
-
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
 
     @Override
     protected void doFilterInternal(
@@ -28,20 +26,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        log.info("JwtAuthenticationFilter is processing the request");
+        log.debug("Processing JWT authentication for request");
 
-        try {
-            String token = getJwtFromRequest(request);
+        String token = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-                Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("Authenticated request with token for user: {}", authentication.getName());
-            } else {
-                log.warn("Invalid or missing JWT token in request");
+        if (StringUtils.hasText(token)) {
+            try {
+                if (jwtTokenProvider.validateToken(token)) {
+                    Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.debug("Successfully authenticated request for user: {}", authentication.getName());
+                } else {
+                    log.warn("JWT token is invalid or expired");
+                }
+            } catch (Exception ex) {
+                log.error("Error occurred during JWT authentication: {}", ex.getMessage(), ex);
             }
-        } catch (Exception ex) {
-            log.error("Failed to authenticate user with token", ex);
+        } else {
+            log.debug("No JWT token found in request headers");
         }
 
         filterChain.doFilter(request, response);
@@ -53,7 +55,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(SecurityConstants.BEARER_PREFIX)) {
             return bearerToken.substring(SecurityConstants.BEARER_PREFIX.length());
         }
-
         return null;
     }
 }

@@ -1,6 +1,6 @@
 package com.jack.common.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -10,23 +10,16 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@RequiredArgsConstructor
 public class RedisCommonConfig {
-
-    @Value("${spring.data.redis.host}")
-    private String redisHost;
-
-    @Value("${spring.data.redis.port}")
-    private int redisPort;
-
-    @Value("${spring.data.redis.password}")
-    private String redisPassword;
+    private final RedisProperties redisProperties;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(redisHost);
-        redisConfig.setPort(redisPort);
-        redisConfig.setPassword(redisPassword);
+        redisConfig.setHostName(redisProperties.getHost());
+        redisConfig.setPort(redisProperties.getPort());
+        redisConfig.setPassword(redisProperties.getPassword());
 
         return new LettuceConnectionFactory(redisConfig);
     }

@@ -15,8 +15,8 @@ import com.jack.userservice.service.UserService;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,16 +27,11 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 @Log4j2
 public class UserController {
     private final UserService userService;
     private final AuthServiceClient authServiceClient;
-
-    @Autowired
-    public UserController(UserService userService, AuthServiceClient authServiceClient) {
-        this.userService = userService;
-        this.authServiceClient = authServiceClient;
-    }
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto> register(@Valid @RequestBody UserRegistrationRequestDto userRegistrationRequestDto) {
