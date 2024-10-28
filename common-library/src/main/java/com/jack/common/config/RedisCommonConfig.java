@@ -17,9 +17,12 @@ public class RedisCommonConfig {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(redisProperties.getHost());
-        redisConfig.setPort(redisProperties.getPort());
-        redisConfig.setPassword(redisProperties.getPassword());
+        redisConfig.setHostName(this.redisProperties.getHost());
+        redisConfig.setPort(this.redisProperties.getPort());
+
+        if (this.redisProperties.getPassword() != null && !this.redisProperties.getPassword().isEmpty()) {
+            redisConfig.setPassword(this.redisProperties.getPassword());
+        }
 
         return new LettuceConnectionFactory(redisConfig);
     }
@@ -29,6 +32,9 @@ public class RedisCommonConfig {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
         return template;
     }
 }
