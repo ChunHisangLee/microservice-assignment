@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -18,14 +19,11 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 @Log4j2
 public class TokenServiceImpl implements TokenService {
     private final RedisTemplate<String, String> redisTemplate;
     private SecretKey secretKey;
-
-    public TokenServiceImpl(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
 
     @PostConstruct
     public void init() {
@@ -47,7 +45,7 @@ public class TokenServiceImpl implements TokenService {
             return;  // Exit early if token is already blacklisted
         }
 
-        long tokenExpiryDuration = getTokenExpiryDuration(token);
+        long tokenExpiryDuration = calculateTokenExpiryDuration(token);
         redisTemplate.opsForValue().set(SecurityConstants.BLACKLIST_PREFIX + token, token);
         redisTemplate.expire(SecurityConstants.BLACKLIST_PREFIX + token, tokenExpiryDuration, TimeUnit.SECONDS);
         log.info("Token added to blacklist with TTL: {} seconds", tokenExpiryDuration);
@@ -79,7 +77,7 @@ public class TokenServiceImpl implements TokenService {
         }
     }
 
-    private long getTokenExpiryDuration(String token) {
+    private long calculateTokenExpiryDuration(String token) {
         try {
             JwtParser parser = Jwts.parser()
                     .verifyWith(secretKey)
@@ -87,17 +85,18 @@ public class TokenServiceImpl implements TokenService {
 
             Claims claims = parser.parseSignedClaims(token).getPayload();
             Date expiration = claims.getExpiration();
-            long now = System.currentTimeMillis();
-            long timeToExpiry = (expiration.getTime() - now) / 1000;
 
-            if (timeToExpiry <= 0) {
-                log.warn("Token has already expired.");
+            if (expiration == null) {
+                log.warn("Token does not have an expiration date set.");
                 return 0;
             }
 
-            return timeToExpiry;
+            long now = System.currentTimeMillis();
+            long timeToExpiry = (expiration.getTime() - now) / 1000;
+
+            return Math.max(timeToExpiry, 0);
         } catch (Exception e) {
-            log.error("Failed to parse JWT token to get expiry duration: {}", e.getMessage());
+            log.error("Failed to parse JWT token for expiry duration: {}", e.getMessage());
             return 0;
         }
     }

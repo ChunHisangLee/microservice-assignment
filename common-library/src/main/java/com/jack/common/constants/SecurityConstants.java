@@ -1,5 +1,7 @@
 package com.jack.common.constants;
 
+import lombok.Getter;
+
 public class SecurityConstants {
 
     private SecurityConstants() {
@@ -9,7 +11,7 @@ public class SecurityConstants {
     // Constants for headers and tokens
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
-    public static final int PREFIX_INDEX = 7;
+    public static final int PREFIX_INDEX = SecurityConstants.BEARER_PREFIX.length();
     public static final String BLACKLIST_PREFIX = "blacklist:";
 
     // JWT Expiration Time (1 hour in milliseconds)
@@ -17,6 +19,7 @@ public class SecurityConstants {
     public static final String JWT_SECRET_KEY = "Xb34fJd9kPbvmJc84mDkV9b3Xb4fJd9kPbvmJc84mDkV9b3Xb34fJd9kPbvmJc84";
 
     // Enum for public URLs
+    @Getter
     public enum PublicUrls {
         API_AUTH("/api/auth/**"),
         PUBLIC("/public/**"),
@@ -33,9 +36,6 @@ public class SecurityConstants {
             this.url = url;
         }
 
-        public String getUrl() {
-            return url;
-        }
     }
 
     public static String[] getPublicUrls() {

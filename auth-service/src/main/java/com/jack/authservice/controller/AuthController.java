@@ -21,9 +21,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> login(@RequestBody AuthRequestDto authRequestDTO) {
-        AuthResponseDto authResponse = authService.login(authRequestDTO);
-        log.info("User {} logged in successfully", authRequestDTO.getEmail());
-        return ResponseEntity.ok(authResponse);
+        try {
+            AuthResponseDto authResponse = authService.login(authRequestDTO);
+            log.info("User {} logged in successfully", authRequestDTO.getEmail());
+            return ResponseEntity.ok(authResponse);
+        } catch (Exception e) {
+            log.error("Login failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @PostMapping("/logout")
@@ -50,6 +55,7 @@ public class AuthController {
             @RequestHeader(SecurityConstants.AUTHORIZATION_HEADER) String token,
             @RequestParam Long userId) {
         String jwtToken = extractToken(token);
+
         if (jwtToken == null) {
             log.warn("Invalid token format.");
             return ResponseEntity.badRequest().body(false);

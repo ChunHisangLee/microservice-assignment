@@ -1,6 +1,6 @@
 package com.jack.authservice.config;
 
-import com.jack.authservice.AuthDto;
+import com.jack.authservice.dto.AuthDto;
 import com.jack.common.config.RedisCommonConfig;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
