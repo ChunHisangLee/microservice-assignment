@@ -5,6 +5,7 @@ import com.jack.priceservice.entity.BTCPriceHistory;
 import com.jack.priceservice.repository.BTCPriceHistoryRepository;
 import com.jack.priceservice.service.PriceService;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 @Component
+@RequiredArgsConstructor
 @Log4j2
 public class ScheduledTasks {
     private static final BigDecimal MIN_PRICE = BigDecimal.valueOf(100);
@@ -24,11 +26,6 @@ public class ScheduledTasks {
 
     private final PriceService priceService;
     private final BTCPriceHistoryRepository btcPriceHistoryRepository;
-
-    public ScheduledTasks(PriceService priceService, BTCPriceHistoryRepository btcPriceHistoryRepository) {
-        this.priceService = priceService;
-        this.btcPriceHistoryRepository = btcPriceHistoryRepository;
-    }
 
     @PostConstruct
     protected void saveInitialPrice() {

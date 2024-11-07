@@ -77,7 +77,7 @@ public class AuthController {
         }
     }
 
-    private String extractToken(String token) {
+    private String extractToken(@RequestParam String token) {
         if (token != null && token.startsWith(SecurityConstants.BEARER_PREFIX)) {
             return token.substring(SecurityConstants.PREFIX_INDEX);
         }

@@ -1,6 +1,7 @@
 package com.jack.authservice.security;
 
 import com.jack.common.constants.SecurityConstants;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,9 +39,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.debug("Successfully authenticated request for user: {}", authentication.getName());
                 } else {
                     log.warn("JWT token is invalid or expired");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+                    return;
                 }
-            } catch (Exception ex) {
-                log.error("Error occurred during JWT authentication: {}", ex.getMessage(), ex);
+            } catch (JwtException | IllegalArgumentException ex) {
+                log.error("JWT authentication failed: {}", ex.getMessage());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
+                return;
             }
         } else {
             log.debug("No JWT token found in request headers");
@@ -55,6 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(SecurityConstants.BEARER_PREFIX)) {
             return bearerToken.substring(SecurityConstants.BEARER_PREFIX.length());
         }
+
         return null;
     }
 }

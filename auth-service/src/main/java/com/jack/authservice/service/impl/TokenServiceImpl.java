@@ -1,34 +1,26 @@
 package com.jack.authservice.service.impl;
 
+import com.jack.authservice.security.JwtTokenProvider;
 import com.jack.authservice.service.TokenService;
 import com.jack.common.constants.SecurityConstants;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 @Log4j2
 public class TokenServiceImpl implements TokenService {
     private final RedisTemplate<String, String> redisTemplate;
-    private SecretKey secretKey;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @PostConstruct
-    public void init() {
-        // Initialize the SecretKey using the JWT secret key from SecurityConstants
-        this.secretKey = Keys.hmacShaKeyFor(SecurityConstants.JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+    public TokenServiceImpl(RedisTemplate<String, String> redisTemplate, JwtTokenProvider jwtTokenProvider) {
+        this.redisTemplate = redisTemplate;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
@@ -63,41 +55,39 @@ public class TokenServiceImpl implements TokenService {
             return false;
         }
 
-        try {
-            JwtParser parser = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build();
-
-            Claims claims = parser.parseSignedClaims(token).getPayload();
-            Long tokenUserId = Long.parseLong(claims.getSubject());
-            return tokenUserId.equals(userId);
-        } catch (Exception e) {
-            log.error("The Token is invalid: {}", e.getMessage());
+        if (!jwtTokenProvider.validateToken(token)) {
+            log.error("Invalid JWT token");
             return false;
         }
+
+        String tokenSubject = jwtTokenProvider.getEmailFromToken(token);
+
+        if (tokenSubject == null) {
+            log.error("Failed to extract subject from token");
+            return false;
+        }
+
+        Long tokenUserId = Long.parseLong(tokenSubject);
+        return tokenUserId.equals(userId);
     }
 
     private long calculateTokenExpiryDuration(String token) {
-        try {
-            JwtParser parser = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build();
+        Claims claims = jwtTokenProvider.getClaimsFromToken(token);
 
-            Claims claims = parser.parseSignedClaims(token).getPayload();
-            Date expiration = claims.getExpiration();
-
-            if (expiration == null) {
-                log.warn("Token does not have an expiration date set.");
-                return 0;
-            }
-
-            long now = System.currentTimeMillis();
-            long timeToExpiry = (expiration.getTime() - now) / 1000;
-
-            return Math.max(timeToExpiry, 0);
-        } catch (Exception e) {
-            log.error("Failed to parse JWT token for expiry duration: {}", e.getMessage());
+        if (claims == null) {
+            log.error("Failed to parse claims from token");
             return 0;
         }
+
+        Date expiration = claims.getExpiration();
+
+        if (expiration == null) {
+            log.warn("Token does not have an expiration date set.");
+            return 0;
+        }
+
+        long now = System.currentTimeMillis();
+        long timeToExpiry = (expiration.getTime() - now) / 1000;
+        return Math.max(timeToExpiry, 0);
     }
 }

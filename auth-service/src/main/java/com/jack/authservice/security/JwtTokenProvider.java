@@ -4,14 +4,12 @@ import com.jack.common.constants.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -20,8 +18,8 @@ public class JwtTokenProvider {
     private final SecretKey secretKey;
     private final long jwtExpirationMs;
 
-    public JwtTokenProvider() {
-        this.secretKey = Keys.hmacShaKeyFor(SecurityConstants.JWT_SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+    public JwtTokenProvider(JwtSecretKeyProvider secretKeyProvider) {
+        this.secretKey = secretKeyProvider.getSecretKey();
         this.jwtExpirationMs = SecurityConstants.JWT_EXPIRATION_MS;
         log.info("Initialized JwtTokenProvider with expiration time: {} ms", jwtExpirationMs);
     }

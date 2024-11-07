@@ -6,8 +6,10 @@ import com.jack.authservice.service.AuthService;
 import com.jack.common.constants.SecurityConstants;
 import com.jack.common.dto.request.AuthRequestDto;
 import com.jack.common.dto.response.AuthResponseDto;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +28,12 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             isPasswordValid = userServiceClient.verifyPassword(authRequestDto);
+        } catch (FeignException e) {
+            log.error("Feign client error while verifying password: {}", e.getMessage());
+            throw new BadCredentialsException("Authentication service unavailable.", e);
         } catch (Exception e) {
-            log.error("Failed to verify password due to an error: {}", e.getMessage());
-            throw new BadCredentialsException("Authentication service unavailable.");
+            log.error("Unexpected error while verifying password: {}", e.getMessage());
+            throw new AuthenticationServiceException("An unexpected error occurred.", e);
         }
 
         if (!isPasswordValid) {
@@ -40,7 +45,6 @@ public class AuthServiceImpl implements AuthService {
         String jwt = jwtTokenProvider.generateTokenFromEmail(authRequestDto.getEmail());
         log.info("Generated JWT token for user: {}", authRequestDto.getEmail());
         return AuthResponseDto.builder()
-
                 .token(jwt)
                 .tokenType("Bearer")  // Default token type is Bearer
                 .expiresIn(SecurityConstants.JWT_EXPIRATION_MS)  // 1-hour expiration time
