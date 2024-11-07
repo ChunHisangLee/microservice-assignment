@@ -15,8 +15,13 @@ public class RabbitMQConfig {
     @Bean
     public Queue walletCreateQueue() {
         log.info("Creating walletCreateQueue: {}", WalletConstants.WALLET_CREATE_QUEUE);
-        return QueueBuilder.durable(WalletConstants.WALLET_CREATE_QUEUE)
-                .build();
+        return QueueBuilder.durable(WalletConstants.WALLET_CREATE_QUEUE).build();
+    }
+
+    @Bean
+    public Queue walletUpdateQueue() {
+        log.info("Creating walletUpdateQueue: {}", WalletConstants.WALLET_UPDATE_QUEUE);
+        return QueueBuilder.durable(WalletConstants.WALLET_UPDATE_QUEUE).build();
     }
 
     @Bean
@@ -40,13 +45,30 @@ public class RabbitMQConfig {
                 .with(WalletConstants.WALLET_CREATE_ROUTING_KEY);
     }
 
+    @Bean
+    public Binding bindingWalletUpdateQueue() {
+        log.info("Binding WalletUpdateQueue {} to exchange {} with routing key {}",
+                WalletConstants.WALLET_UPDATE_QUEUE,
+                WalletConstants.WALLET_EXCHANGE,
+                WalletConstants.WALLET_UPDATE_ROUTING_KEY);
+
+        return BindingBuilder.bind(walletUpdateQueue())
+                .to(walletExchange())
+                .with(WalletConstants.WALLET_UPDATE_ROUTING_KEY);
+    }
     // User Service Configuration
     @Bean
     public Queue userCreateQueue() {
         log.info("Creating userCreateQueue: {}", UserConstants.USER_CREATE_QUEUE);
-        return QueueBuilder.durable(UserConstants.USER_CREATE_QUEUE)
-                .build();
+        return QueueBuilder.durable(UserConstants.USER_CREATE_QUEUE).build();
     }
+
+    @Bean
+    public Queue userUpdateQueue() {
+        log.info("Creating userUpdateQueue: {}", UserConstants.USER_UPDATE_QUEUE);
+        return QueueBuilder.durable(UserConstants.USER_UPDATE_QUEUE).build();
+    }
+
 
     @Bean
     public TopicExchange userExchange() {
@@ -68,12 +90,31 @@ public class RabbitMQConfig {
                 .with(UserConstants.USER_CREATE_ROUTING_KEY);
     }
 
+    @Bean
+    public Binding bindingUserUpdateQueue() {
+        log.info("Binding UserUpdateQueue {} to exchange {} with routing key {}",
+                UserConstants.USER_UPDATE_QUEUE,
+                UserConstants.USER_EXCHANGE,
+                UserConstants.USER_UPDATE_ROUTING_KEY);
+
+        return BindingBuilder.bind(userUpdateQueue())
+                .to(userExchange())
+                .with(UserConstants.USER_UPDATE_ROUTING_KEY);
+    }
+
+
     // Transaction Service Configuration
     @Bean
     public Queue transactionCreateQueue() {
         log.info("Creating transactionCreateQueue: {}", TransactionConstants.TRANSACTION_CREATE_QUEUE);
         return QueueBuilder.durable(TransactionConstants.TRANSACTION_CREATE_QUEUE)
                 .build();
+    }
+
+    @Bean
+    public Queue transactionUpdateQueue() {
+        log.info("Creating transactionUpdateQueue: {}", TransactionConstants.TRANSACTION_UPDATE_QUEUE);
+        return QueueBuilder.durable(TransactionConstants.TRANSACTION_UPDATE_QUEUE).build();
     }
 
     @Bean
@@ -94,5 +135,17 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(transactionCreateQueue())
                 .to(transactionExchange())
                 .with(TransactionConstants.TRANSACTION_CREATE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding bindingTransactionUpdateQueue() {
+        log.info("Binding TransactionUpdateQueue {} to exchange {} with routing key {}",
+                TransactionConstants.TRANSACTION_UPDATE_QUEUE,
+                TransactionConstants.TRANSACTION_EXCHANGE,
+                TransactionConstants.TRANSACTION_UPDATE_ROUTING_KEY);
+
+        return BindingBuilder.bind(transactionUpdateQueue())
+                .to(transactionExchange())
+                .with(TransactionConstants.TRANSACTION_UPDATE_ROUTING_KEY);
     }
 }

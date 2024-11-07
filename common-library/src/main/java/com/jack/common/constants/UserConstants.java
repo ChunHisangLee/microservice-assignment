@@ -16,6 +16,6 @@ public final class UserConstants {
     public static final String USER_EXCHANGE = "user-exchange";
 
     // Routing keys for user operations
-    public static final String USER_CREATE_ROUTING_KEY = "user.creation";
-    public static final String USER_UPDATE_ROUTING_KEY = "user.update";
+    public static final String USER_CREATE_ROUTING_KEY = "user.create.routing.key";
+    public static final String USER_UPDATE_ROUTING_KEY = "user.update.routing.key";
 }

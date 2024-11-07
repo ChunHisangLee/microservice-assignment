@@ -21,7 +21,10 @@ public final class WalletConstants {
     public static final String WALLET_EXCHANGE = "wallet-exchange";
 
     // Routing keys for wallet operations
-    public static final String WALLET_CREATE_ROUTING_KEY = "wallet.creation";
-    public static final String WALLET_UPDATE_ROUTING_KEY = "wallet.update";
-    public static final String WALLET_BALANCE_ROUTING_KEY = "wallet.balance";
+    public static final String WALLET_CREATE_ROUTING_KEY = "wallet.create.routing.key";
+    public static final String WALLET_UPDATE_ROUTING_KEY = "wallet.update.routing.key";
+    public static final String WALLET_BALANCE_ROUTING_KEY = "wallet.balance.routing.key";
+
+    public static final String WALLET_CREATE = "WALLET_CREATE";
+    public static final String WALLET_UPDATE = "WALLET_UPDATE";
 }

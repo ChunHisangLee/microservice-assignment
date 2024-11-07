@@ -2,7 +2,7 @@ package com.jack.common.constants;
 
 import java.math.BigDecimal;
 
-public class ApplicationConstants {
+public final class ApplicationConstants {
 
     // Pagination defaults
     public static final int DEFAULT_PAGE_NUMBER = 0;
