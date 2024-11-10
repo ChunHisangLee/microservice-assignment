@@ -1,12 +1,12 @@
 package com.jack.priceservice.schedule;
 
-import com.jack.common.constants.ApplicationConstants;
 import com.jack.priceservice.entity.BTCPriceHistory;
 import com.jack.priceservice.repository.BTCPriceHistoryRepository;
 import com.jack.priceservice.service.PriceService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +20,10 @@ public class ScheduledTasks {
     private static final BigDecimal MAX_PRICE = BigDecimal.valueOf(460);
     private static final BigDecimal PRICE_INCREMENT = BigDecimal.valueOf(10);
     public static final int SCHEDULE_RATE_MS = 5 * 1000;
-
     private boolean isIncreasing = true;
-    private BigDecimal currentPrice = ApplicationConstants.INITIAL_PRICE;
+
+    @Value("${initial.price:100.00}")
+    private BigDecimal currentPrice;
 
     private final PriceService priceService;
     private final BTCPriceHistoryRepository btcPriceHistoryRepository;

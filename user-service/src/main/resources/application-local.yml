@@ -1,6 +1,14 @@
 openapi:
-  title: "User Service API"
-  version: "v1"
+  title: User Service API
+  version: v1.0
+  description: This API provides User service for applications.
+  termsOfService: https://test.com/terms
+  contact:
+    name: Jack Lee
+    email: jack@test.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
 
 spring:
   rabbitmq:
